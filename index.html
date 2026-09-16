@@ -220,7 +220,7 @@
     display:flex;
     align-items:center;
     gap:10px;
-    background:var(--surface);
+    background:var(--bg);
     border:1px solid var(--line);
     border-radius:12px;
     padding:13px 15px;
@@ -310,7 +310,7 @@
   .bldg-search .search-ic{ font-size:13px; opacity:0.6; }
   .bldg-search input{
     flex:1; border:none; outline:none; background:transparent;
-    font-size:13.5px; color:var(--ink); font-family:'Noto Sans KR', sans-serif;
+    font-size:16px; color:var(--ink); font-family:'Noto Sans KR', sans-serif;
   }
   .bldg-search input::placeholder{ color:var(--ink-soft); }
   .hl-match{ color:var(--gold-deep); font-weight:700; }
@@ -351,17 +351,36 @@
     background:var(--surface);
     border:1px solid var(--line);
     border-radius:14px;
-    padding:22px;
-    margin-bottom:20px;
+    padding:18px;
+    margin:2px 0 18px;
     box-shadow:var(--shadow-lift);
-    display:none;
   }
-  .detail.show{display:block;}
+  .detail-photo-wrap{
+    position:relative;
+    margin:-18px -18px 0;
+  }
+  .detail-photo-wrap .bldg-illust{
+    border-radius:14px 14px 0 0;
+    margin-bottom:0;
+  }
+  .detail-close{
+    position:absolute; top:10px; right:10px;
+    width:28px; height:28px; border-radius:50%;
+    border:none; background:rgba(20,20,22,0.55);
+    color:#fff; font-size:13px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
   .detail h2{
     font-family:'Gowun Batang', serif;
     font-size:19px;
-    margin:0 0 14px;
+    margin:16px 0 6px;
     font-weight:700;
+  }
+  .detail-info{
+    font-size:13px;
+    color:var(--ink-soft);
+    line-height:1.6;
+    margin:0 0 16px;
   }
   .compass-wrap{
     display:flex;
@@ -477,9 +496,40 @@
     color:var(--ink-soft);
     margin-top:6px;
   }
+  .med-endtime{
+    font-size:11.5px;
+    color:var(--ink-soft);
+    opacity:0.75;
+    margin-top:3px;
+    min-height:15px;
+  }
+  .med-outputs{
+    display:flex; justify-content:center; gap:22px;
+    margin:26px 0 4px;
+  }
+  .med-output{
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    background:transparent; border:none; cursor:pointer;
+    font-size:11px; color:var(--ink-soft);
+    font-family:'Noto Sans KR', sans-serif;
+    padding:2px;
+  }
+  .med-output-ic{
+    width:44px; height:44px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px;
+    border:1.3px solid var(--line);
+    background:var(--surface);
+  }
+  .med-output.active{ color:var(--gold-deep); font-weight:600; }
+  :root[data-theme="dark"] .med-output.active, :root:not([data-theme="light"]) .med-output.active{ color:var(--gold); }
+  .med-output.active .med-output-ic{
+    border-color:var(--gold); background:var(--gold-tint);
+  }
   .med-presets{
     display:flex; flex-wrap:wrap; justify-content:center; gap:8px;
-    margin:28px 0 22px;
+    margin:24px 0 22px;
   }
   .med-chip{
     padding:9px 16px;
@@ -566,7 +616,7 @@
   .bldg-illust img{ width:100%; height:100%; object-fit:cover; }
 
   .photo-actions{
-    display:flex; gap:14px; margin:-8px 0 16px;
+    display:flex; gap:14px; margin:10px 0 4px;
     font-size:12px;
   }
   .photo-actions label, .photo-actions span{
@@ -640,11 +690,49 @@
 
     <!-- ============ NAV VIEW ============ -->
     <section id="view-nav" class="view">
-      <div class="locate-bar">
-        <div class="dot" id="gps-dot"></div>
-        <div class="txt" id="gps-text">아직 위치를 확인하지 않았어요</div>
-        <button id="locate-btn">내 위치 찾기</button>
+      <div class="bldg-search">
+        <span class="search-ic">🔍</span>
+        <input id="bldg-search-input" type="text" inputmode="search" placeholder="건물 이름 또는 번호로 검색 (예: 60주년, 59)">
       </div>
+      <div id="bldg-list"></div>
+      <div class="empty-note" id="bldg-empty">건물을 탭하면 사진·정보·지도를 볼 수 있어요.</div>
+
+      <div id="detail-holder" style="display:none">
+      <div class="detail" id="detail">
+        <div class="detail-photo-wrap">
+          <div class="bldg-illust" id="bldg-illust"></div>
+          <button class="detail-close" id="detail-close" aria-label="닫기">✕</button>
+        </div>
+        <div class="photo-actions" id="photo-actions">
+          <label for="photo-input">📷 사진 추가</label>
+          <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none">
+          <span class="remove" id="photo-remove">사진 삭제</span>
+        </div>
+        <h2 id="detail-name">건물명</h2>
+        <p class="detail-info" id="detail-info"></p>
+
+        <div class="locate-bar">
+          <div class="dot" id="gps-dot"></div>
+          <div class="txt" id="gps-text">아직 위치를 확인하지 않았어요</div>
+          <button id="locate-btn">내 위치 찾기</button>
+        </div>
+        <div class="compass-wrap">
+          <div class="compass">
+            <div class="n">N</div>
+            <div class="arrow" id="arrow"></div>
+            <div class="center-dot"></div>
+          </div>
+          <div class="compass-stats">
+            <div class="dist" id="detail-dist">-- m</div>
+            <div class="dir" id="detail-dir">방향 확인 중</div>
+            <div class="note">화살표는 실제 이동 경로가 아닌, 현재 위치에서 목적지까지의 직선 나침반 방향(진북 기준)을 가리켜요.</div>
+          </div>
+        </div>
+        <div class="map-app-row">
+          <a id="open-google" class="map-app-btn google" target="_blank" rel="noopener">구글지도</a>
+          <a id="open-kakao" class="map-app-btn kakao" target="_blank" rel="noopener">카카오맵</a>
+          <a id="open-naver" class="map-app-btn naver" target="_blank" rel="noopener">네이버지도</a>
+        </div>
 
       <div class="map-card">
         <div class="map-outer">
@@ -665,41 +753,8 @@
           <span>드래그로 이동 · 핀치 또는 버튼으로 확대/축소</span>
         </div>
       </div>
-
-      <div class="detail" id="detail">
-        <div class="bldg-illust" id="bldg-illust"></div>
-        <div class="photo-actions" id="photo-actions">
-          <label for="photo-input">📷 사진 추가</label>
-          <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none">
-          <span class="remove" id="photo-remove">사진 삭제</span>
-        </div>
-        <h2 id="detail-name">건물명</h2>
-        <div class="compass-wrap">
-          <div class="compass">
-            <div class="n">N</div>
-            <div class="arrow" id="arrow"></div>
-            <div class="center-dot"></div>
-          </div>
-          <div class="compass-stats">
-            <div class="dist" id="detail-dist">-- m</div>
-            <div class="dir" id="detail-dir">방향 확인 중</div>
-            <div class="note">화살표는 실제 이동 경로가 아닌, 현재 위치에서 목적지까지의 직선 나침반 방향(진북 기준)을 가리켜요.</div>
-          </div>
-        </div>
-        <div class="map-app-row">
-          <a id="open-google" class="map-app-btn google" target="_blank" rel="noopener">구글지도</a>
-          <a id="open-kakao" class="map-app-btn kakao" target="_blank" rel="noopener">카카오맵</a>
-          <a id="open-naver" class="map-app-btn naver" target="_blank" rel="noopener">네이버지도</a>
-        </div>
       </div>
-
-      <div class="section-label">캠퍼스 건물</div>
-      <div class="bldg-search">
-        <span class="search-ic">🔍</span>
-        <input id="bldg-search-input" type="text" inputmode="search" placeholder="건물 이름 또는 번호로 검색 (예: 60주년, 59)">
       </div>
-      <div id="bldg-list"></div>
-      <div class="empty-note" id="bldg-empty">건물을 탭하면 방향과 거리를 볼 수 있어요. 실내 경로 안내는 추후 업데이트될 예정이에요.</div>
     </section>
 
     <!-- ============ MEDITATION NAP VIEW ============ -->
@@ -714,18 +769,31 @@
         <div class="med-core">
           <div class="med-time" id="med-time">10:00</div>
           <div class="med-phase" id="med-phase">시간을 선택하세요</div>
+          <div class="med-endtime" id="med-endtime"></div>
+        </div>
+
+        <div class="med-outputs" id="med-outputs">
+          <button class="med-output active" data-mode="earphone" aria-label="이어폰">
+            <span class="med-output-ic">🎧</span>이어폰
+          </button>
+          <button class="med-output" data-mode="vibrate" aria-label="진동">
+            <span class="med-output-ic">📳</span>진동
+          </button>
+          <button class="med-output" data-mode="speaker" aria-label="스피커">
+            <span class="med-output-ic">🔊</span>스피커
+          </button>
         </div>
 
         <div class="med-presets" id="med-presets">
+          <button class="med-chip active" data-min="1">1분</button>
           <button class="med-chip" data-min="5">5분</button>
-          <button class="med-chip active" data-min="10">10분</button>
-          <button class="med-chip" data-min="15">15분</button>
-          <button class="med-chip" data-min="20">20분</button>
+          <button class="med-chip" data-min="10">10분</button>
           <button class="med-chip" data-min="30">30분</button>
+          <button class="med-chip" data-min="60">1시간</button>
         </div>
 
         <button class="med-main-btn" id="med-start-btn">명상 냅 시작</button>
-        <p class="med-hint">숨을 들이쉬고 내쉬는 원의 움직임에 맞춰 천천히 호흡하며 눈을 감아보세요.</p>
+        <p class="med-hint" id="med-hint">숨을 들이쉬고 내쉬는 원의 움직임에 맞춰 천천히 호흡하며 눈을 감아보세요.</p>
       </div>
     </section>
   </main>
@@ -851,81 +919,81 @@ function closeNoticeModal(){
 const MAP_IMG_W = 787, MAP_IMG_H = 730;
 /* lat/lng이 있는 건물은 실측 GPS 기준 거리·방향 안내 가능, null인 건물은 지도 위치만 정확하고 GPS 거리는 준비중 */
 const BUILDINGS = [
-  {id:"1", name:"정문", sub:"캠퍼스 출입구", px:395, py:615, lat:null, lng:null, illust:"gate"},
-  {id:"2", name:"서문", sub:"캠퍼스 출입구", px:110, py:442, lat:null, lng:null, illust:"gate"},
-  {id:"3", name:"남문", sub:"캠퍼스 출입구", px:600, py:610, lat:35.96443, lng:126.9577, illust:"gate"},
-  {id:"4", name:"동문", sub:"캠퍼스 출입구", px:490, py:155, lat:35.9714668, lng:126.9643265, illust:"gate"},
-  {id:"5", name:"대운동장", sub:"육상트랙·축구장", px:280, py:270, lat:35.9703391, lng:126.9600979, illust:"stadium"},
-  {id:"6", name:"소운동장", sub:"보조 운동장", px:390, py:345, lat:null, lng:null, illust:"stadium"},
-  {id:"7", name:"자연식물원", sub:"자연 식물원", px:700, py:165, lat:null, lng:null, illust:"museum"},
-  {id:"11", name:"XR개발지원센터", sub:"XR 개발 지원", px:170, py:568, lat:null, lng:null, illust:"office"},
-  {id:"12", name:"대학본관", sub:"행정·민원 업무", px:170, py:503, lat:35.9690386, lng:126.9537042, illust:"office"},
-  {id:"12-1", name:"창고", sub:"교내 창고", px:165, py:530, lat:null, lng:null, illust:"office"},
-  {id:"13", name:"(구)생활과학대학", sub:"(구)생활과학대학", px:170, py:443, lat:null, lng:null, illust:"humanities"},
-  {id:"14", name:"학생지원관", sub:"학생 상담·지원", px:215, py:440, lat:35.9697237, lng:126.9545952, illust:"office"},
-  {id:"14-1", name:"중앙도서관", sub:"자료실·열람실", px:240, py:385, lat:35.9702607, lng:126.9553666, illust:"library"},
-  {id:"15-1", name:"노천극장", sub:"노천극장", px:330, py:548, lat:null, lng:null, illust:"hall"},
-  {id:"16", name:"60주년기념관", sub:"평생교육원", px:555, py:595, lat:35.9658951, lng:126.9544319, illust:"hall"},
-  {id:"17", name:"숭산기념관", sub:"대학교당·교직원식당", px:450, py:575, lat:null, lng:null, illust:"hall"},
-  {id:"18", name:"원체육관", sub:"실내 체육시설", px:293, py:505, lat:35.968256, lng:126.9549874, illust:"sports"},
-  {id:"19", name:"스포츠과학관", sub:"스포츠과학관", px:365, py:478, lat:null, lng:null, illust:"sports"},
-  {id:"20", name:"교육대학", sub:"교육대학", px:183, py:390, lat:null, lng:null, illust:"humanities"},
-  {id:"21", name:"수덕호", sub:"봉정각", px:350, py:405, lat:null, lng:null, illust:"museum"},
-  {id:"22", name:"공공정책대학", sub:"공공정책대학", px:400, py:428, lat:null, lng:null, illust:"humanities"},
-  {id:"22-1", name:"공공정책대학 별관", sub:"공공정책대학 별관", px:420, py:448, lat:null, lng:null, illust:"humanities"},
-  {id:"24", name:"학생회관", sub:"학생식당", px:410, py:468, lat:null, lng:null, illust:"office"},
-  {id:"25", name:"원광디지털대학교", sub:"원광디지털대학교", px:155, py:335, lat:null, lng:null, illust:"office"},
-  {id:"26", name:"법학전문대학원", sub:"법학전문대학원", px:290, py:345, lat:35.9702972, lng:126.9563561, illust:"humanities"},
-  {id:"30", name:"융화관", sub:"학생생활관(기숙사)", px:195, py:260, lat:35.9722, lng:126.9569593, illust:"student"},
-  {id:"31", name:"개혁관", sub:"학생생활관(기숙사)", px:165, py:257, lat:35.9728325, lng:126.9571492, illust:"student"},
-  {id:"32", name:"학림관", sub:"학림관", px:100, py:180, lat:null, lng:null, illust:"student"},
-  {id:"33", name:"심동관", sub:"학생생활관(기숙사)", px:175, py:240, lat:35.9682695, lng:126.9585945, illust:"student"},
-  {id:"34", name:"새은관", sub:"새은관", px:222, py:183, lat:null, lng:null, illust:"student"},
-  {id:"35", name:"보은관", sub:"보은관", px:240, py:208, lat:null, lng:null, illust:"student"},
-  {id:"36", name:"어학관", sub:"어학관", px:205, py:150, lat:null, lng:null, illust:"humanities"},
-  {id:"37", name:"정문관", sub:"정문관", px:200, py:208, lat:null, lng:null, illust:"office"},
-  {id:"38", name:"글로벌교류센터", sub:"글로벌교류센터", px:220, py:238, lat:null, lng:null, illust:"office"},
-  {id:"51", name:"사회과학대학", sub:"사회과학대학", px:185, py:305, lat:35.9713667, lng:126.957126, illust:"humanities"},
-  {id:"51-1", name:"사회과학대학 신관", sub:"사회과학대학 신관", px:255, py:258, lat:null, lng:null, illust:"humanities"},
-  {id:"51-2", name:"소방행정관", sub:"소방행정관", px:200, py:282, lat:null, lng:null, illust:"office"},
-  {id:"53", name:"경영대학", sub:"경영대학", px:245, py:290, lat:35.9709779, lng:126.9575982, illust:"humanities"},
-  {id:"53-1", name:"경영대학 신관", sub:"경영대학 신관", px:290, py:305, lat:null, lng:null, illust:"humanities"},
-  {id:"55", name:"학군단", sub:"학군단", px:280, py:207, lat:null, lng:null, illust:"office"},
-  {id:"56", name:"인문대학", sub:"인문대학", px:275, py:225, lat:35.9712557, lng:126.9587092, illust:"humanities"},
-  {id:"57", name:"새천년관", sub:"새천년관", px:310, py:265, lat:null, lng:null, illust:"hall"},
-  {id:"58", name:"물품보관창고", sub:"물품보관창고", px:330, py:153, lat:null, lng:null, illust:"office"},
-  {id:"59", name:"창의공과대학", sub:"창의공과대학", px:415, py:410, lat:35.9678672, lng:126.9581537, illust:"engineering"},
-  {id:"59-1", name:"기계공작실", sub:"기계공작실", px:525, py:295, lat:null, lng:null, illust:"engineering"},
-  {id:"59-2", name:"U.T.M실", sub:"U.T.M실", px:535, py:310, lat:null, lng:null, illust:"engineering"},
-  {id:"59-3", name:"자동차실습관", sub:"자동차실습관", px:555, py:290, lat:null, lng:null, illust:"engineering"},
-  {id:"60", name:"박물관", sub:"대학 박물관·전시", px:590, py:520, lat:35.9662562, lng:126.9567373, illust:"museum"},
-  {id:"61", name:"도예관", sub:"도예관", px:390, py:170, lat:null, lng:null, illust:"engineering"},
-  {id:"62", name:"조소관", sub:"조소관", px:330, py:193, lat:null, lng:null, illust:"engineering"},
-  {id:"62-1", name:"조소관 별관", sub:"조소관 별관", px:350, py:170, lat:null, lng:null, illust:"engineering"},
-  {id:"63", name:"보건과학대학", sub:"보건과학대학", px:635, py:355, lat:35.9677005, lng:126.9592925, illust:"medical"},
-  {id:"64", name:"승리관", sub:"승리관", px:400, py:153, lat:null, lng:null, illust:"office"},
-  {id:"65", name:"문화체육관", sub:"대형 체육·행사시설", px:720, py:565, lat:35.9652510, lng:126.9573320, illust:"sports"},
-  {id:"65-1", name:"문화체육관 별관", sub:"문화체육관 별관", px:655, py:525, lat:null, lng:null, illust:"sports"},
-  {id:"66", name:"농식품융합대학", sub:"농식품융합대학", px:590, py:270, lat:null, lng:null, illust:"engineering"},
-  {id:"67", name:"무빙테크노관", sub:"창업보육센터", px:475, py:175, lat:null, lng:null, illust:"office"},
-  {id:"68", name:"약학대학", sub:"약학대학", px:660, py:390, lat:35.9669229, lng:126.9595981, illust:"pharmacy"},
-  {id:"69", name:"의과대학", sub:"의학과", px:572, py:460, lat:35.9657047, lng:126.9590814, illust:"medical"},
-  {id:"69-1", name:"제생의학관", sub:"제생의학관", px:572, py:435, lat:null, lng:null, illust:"medical"},
-  {id:"69-2", name:"제1호 산학협력관", sub:"산학협력관", px:520, py:447, lat:null, lng:null, illust:"office"},
-  {id:"70", name:"한의학전문대학원", sub:"한의학전문대학원", px:545, py:488, lat:35.9652841, lng:126.9586815, illust:"medical"},
-  {id:"71", name:"한의과대학", sub:"한의과대학", px:585, py:512, lat:null, lng:null, illust:"medical"},
-  {id:"72", name:"사범대학", sub:"사범대학", px:572, py:335, lat:35.9673117, lng:126.9608757, illust:"humanities"},
-  {id:"72-1", name:"사범대학 부속유치원", sub:"부속유치원", px:567, py:308, lat:null, lng:null, illust:"humanities"},
-  {id:"73", name:"간호대학", sub:"간호대학", px:582, py:350, lat:null, lng:null, illust:"medical"},
-  {id:"74", name:"치과대학", sub:"치의학과", px:643, py:450, lat:35.9650573, lng:126.9606074, illust:"medical"},
-  {id:"74-1", name:"제2치과관", sub:"제2치과관", px:688, py:423, lat:null, lng:null, illust:"medical"},
-  {id:"80", name:"원광문화센터", sub:"원광문화센터", px:605, py:575, lat:null, lng:null, illust:"hall"},
-  {id:"81", name:"원광대학교 한방병원", sub:"한방병원", px:630, py:535, lat:null, lng:null, illust:"medical"},
-  {id:"82", name:"원광대학교병원", sub:"대학병원", px:623, py:488, lat:null, lng:null, illust:"medical"},
-  {id:"83", name:"원광대학교 치과병원", sub:"치과병원", px:697, py:445, lat:null, lng:null, illust:"medical"},
-  {id:"84", name:"권역응급의료센터", sub:"응급의료센터", px:565, py:402, lat:null, lng:null, illust:"medical"},
-  {id:"85", name:"원광대학교병원 장례문화원", sub:"장례문화원", px:663, py:397, lat:null, lng:null, illust:"hall"},
-  {id:"86", name:"프라임관", sub:"컨퍼런스홀 외", px:550, py:405, lat:35.9684744, lng:126.9579818, illust:"office"},
+  {id:"1", name:"정문", sub:"캠퍼스 출입구", info:"원광대학교 캠퍼스의 정문이에요. 통학버스도 주로 이 문으로 드나들어요.", px:395, py:615, lat:null, lng:null, illust:"gate"},
+  {id:"2", name:"서문", sub:"캠퍼스 출입구", info:"캠퍼스 서쪽 출입구예요.", px:110, py:442, lat:null, lng:null, illust:"gate"},
+  {id:"3", name:"남문", sub:"캠퍼스 출입구", info:"캠퍼스 남쪽 출입구로, 의과대학·병원 방면과 가까워요.", px:600, py:610, lat:35.96443, lng:126.9577, illust:"gate"},
+  {id:"4", name:"동문", sub:"캠퍼스 출입구", info:"캠퍼스 동쪽 출입구예요.", px:490, py:155, lat:35.9714668, lng:126.9643265, illust:"gate"},
+  {id:"5", name:"대운동장", sub:"육상트랙·축구장", info:"육상 트랙과 축구장을 갖춘 메인 운동장으로, 체육대회 등 각종 행사가 열려요.", px:280, py:270, lat:35.9703391, lng:126.9600979, illust:"stadium"},
+  {id:"6", name:"소운동장", sub:"보조 운동장", info:"가볍게 운동하거나 쉬어갈 수 있는 보조 운동장이에요.", px:390, py:345, lat:null, lng:null, illust:"stadium"},
+  {id:"7", name:"자연식물원", sub:"자연 식물원", info:"다양한 식물을 관찰할 수 있는 교내 식물원이에요.", px:700, py:165, lat:null, lng:null, illust:"museum"},
+  {id:"11", name:"XR개발지원센터", sub:"XR 개발 지원", info:"가상현실·확장현실(XR) 콘텐츠 개발을 지원하는 시설이에요.", px:170, py:568, lat:null, lng:null, illust:"office"},
+  {id:"12", name:"대학본관", sub:"행정·민원 업무", info:"학적·증명서 발급 등 학교 행정 업무를 처리하는 중심 행정관이에요.", px:170, py:503, lat:35.9690386, lng:126.9537042, illust:"office"},
+  {id:"12-1", name:"창고", sub:"교내 창고", info:"대학본관 옆에 있는 교내 창고예요.", px:165, py:530, lat:null, lng:null, illust:"office"},
+  {id:"13", name:"(구)생활과학대학", sub:"(구)생활과학대학", info:"예전 생활과학대학이 있던 건물이에요.", px:170, py:443, lat:null, lng:null, illust:"humanities"},
+  {id:"14", name:"학생지원관", sub:"학생 상담·지원", info:"학생 상담, 취업 지원 등 학생 지원 업무를 담당하는 건물이에요.", px:215, py:440, lat:35.9697237, lng:126.9545952, illust:"office"},
+  {id:"14-1", name:"중앙도서관", sub:"자료실·열람실", info:"책과 학습 자료를 열람하고 공부할 수 있는 중앙도서관이에요.", px:240, py:385, lat:35.9702607, lng:126.9553666, illust:"library"},
+  {id:"15-1", name:"노천극장", sub:"노천극장", info:"야외 행사나 공연이 열리는 노천극장이에요.", px:330, py:548, lat:null, lng:null, illust:"hall"},
+  {id:"16", name:"60주년기념관", sub:"평생교육원", info:"개교 60주년을 기념해 지어진 건물로, 평생교육원이 있어요.", px:555, py:595, lat:35.9658951, lng:126.9544319, illust:"hall"},
+  {id:"17", name:"숭산기념관", sub:"대학교당·교직원식당", info:"대학교당과 교직원 식당이 있는 건물이에요.", px:450, py:575, lat:null, lng:null, illust:"hall"},
+  {id:"18", name:"원체육관", sub:"실내 체육시설", info:"농구·배구 등 실내 체육 수업과 행사가 열리는 체육관이에요.", px:293, py:505, lat:35.968256, lng:126.9549874, illust:"sports"},
+  {id:"19", name:"스포츠과학관", sub:"스포츠과학관", info:"스포츠과학 관련 강의와 실습이 이뤄지는 건물이에요.", px:365, py:478, lat:null, lng:null, illust:"sports"},
+  {id:"20", name:"교육대학", sub:"교육대학", info:"교육대학 소속 강의실과 교수 연구실이 있는 건물이에요.", px:183, py:390, lat:null, lng:null, illust:"humanities"},
+  {id:"21", name:"수덕호", sub:"봉정각", info:"캠퍼스 중심에 있는 연못으로, 봉정각과 함께 산책하기 좋아요.", px:350, py:405, lat:null, lng:null, illust:"museum"},
+  {id:"22", name:"공공정책대학", sub:"공공정책대학", info:"공공정책대학 소속 강의실이 있는 건물이에요.", px:400, py:428, lat:null, lng:null, illust:"humanities"},
+  {id:"22-1", name:"공공정책대학 별관", sub:"공공정책대학 별관", info:"공공정책대학의 별관 건물이에요.", px:420, py:448, lat:null, lng:null, illust:"humanities"},
+  {id:"24", name:"학생회관", sub:"학생식당", info:"학생식당이 있어 끼니를 해결할 수 있는 건물이에요.", px:410, py:468, lat:null, lng:null, illust:"office"},
+  {id:"25", name:"원광디지털대학교", sub:"원광디지털대학교", info:"원광디지털대학교 관련 시설이 있는 건물이에요.", px:155, py:335, lat:null, lng:null, illust:"office"},
+  {id:"26", name:"법학전문대학원", sub:"법학전문대학원", info:"법학전문대학원 강의실과 연구실이 있는 건물이에요.", px:290, py:345, lat:35.9702972, lng:126.9563561, illust:"humanities"},
+  {id:"30", name:"융화관", sub:"학생생활관(기숙사)", info:"학생들이 생활하는 기숙사 건물이에요.", px:195, py:260, lat:35.9722, lng:126.9569593, illust:"student"},
+  {id:"31", name:"개혁관", sub:"학생생활관(기숙사)", info:"학생들이 생활하는 기숙사 건물이에요.", px:165, py:257, lat:35.9728325, lng:126.9571492, illust:"student"},
+  {id:"32", name:"학림관", sub:"학림관", info:"학생 관련 시설이 있는 건물이에요.", px:100, py:180, lat:null, lng:null, illust:"student"},
+  {id:"33", name:"심동관", sub:"학생생활관(기숙사)", info:"학생들이 생활하는 기숙사 건물이에요.", px:175, py:240, lat:35.9682695, lng:126.9585945, illust:"student"},
+  {id:"34", name:"새은관", sub:"새은관", info:"학생 생활 관련 시설이 있는 건물이에요.", px:222, py:183, lat:null, lng:null, illust:"student"},
+  {id:"35", name:"보은관", sub:"보은관", info:"학생 생활 관련 시설이 있는 건물이에요.", px:240, py:208, lat:null, lng:null, illust:"student"},
+  {id:"36", name:"어학관", sub:"어학관", info:"외국어 강의와 어학 실습이 이뤄지는 건물이에요.", px:205, py:150, lat:null, lng:null, illust:"humanities"},
+  {id:"37", name:"정문관", sub:"정문관", info:"행정 관련 업무를 보는 건물이에요.", px:200, py:208, lat:null, lng:null, illust:"office"},
+  {id:"38", name:"글로벌교류센터", sub:"글로벌교류센터", info:"외국인 유학생 지원과 국제 교류 업무를 담당하는 곳이에요.", px:220, py:238, lat:null, lng:null, illust:"office"},
+  {id:"51", name:"사회과학대학", sub:"사회과학대학", info:"사회과학대학 소속 강의실과 교수 연구실이 있는 건물이에요.", px:185, py:305, lat:35.9713667, lng:126.957126, illust:"humanities"},
+  {id:"51-1", name:"사회과학대학 신관", sub:"사회과학대학 신관", info:"사회과학대학의 신관 건물이에요.", px:255, py:258, lat:null, lng:null, illust:"humanities"},
+  {id:"51-2", name:"소방행정관", sub:"소방행정관", info:"소방행정학과 관련 강의실이 있는 건물이에요.", px:200, py:282, lat:null, lng:null, illust:"office"},
+  {id:"53", name:"경영대학", sub:"경영대학", info:"경영대학 소속 강의실과 교수 연구실이 있는 건물이에요.", px:245, py:290, lat:35.9709779, lng:126.9575982, illust:"humanities"},
+  {id:"53-1", name:"경영대학 신관", sub:"경영대학 신관", info:"경영대학의 신관 건물이에요.", px:290, py:305, lat:null, lng:null, illust:"humanities"},
+  {id:"55", name:"학군단", sub:"학군단", info:"학군단(ROTC) 관련 시설이 있는 건물이에요.", px:280, py:207, lat:null, lng:null, illust:"office"},
+  {id:"56", name:"인문대학", sub:"인문대학", info:"국어국문학과 등 인문대학 소속 강의실이 있는 건물이에요.", px:275, py:225, lat:35.9712557, lng:126.9587092, illust:"humanities"},
+  {id:"57", name:"새천년관", sub:"새천년관", info:"각종 강의와 행사가 열리는 건물이에요.", px:310, py:265, lat:null, lng:null, illust:"hall"},
+  {id:"58", name:"물품보관창고", sub:"물품보관창고", info:"교내 물품을 보관하는 창고예요.", px:330, py:153, lat:null, lng:null, illust:"office"},
+  {id:"59", name:"창의공과대학", sub:"창의공과대학", info:"창의공과대학 소속 강의실과 실습실이 있는 건물이에요.", px:415, py:410, lat:35.9678672, lng:126.9581537, illust:"engineering"},
+  {id:"59-1", name:"기계공작실", sub:"기계공작실", info:"기계 관련 실습이 이뤄지는 공작실이에요.", px:525, py:295, lat:null, lng:null, illust:"engineering"},
+  {id:"59-2", name:"U.T.M실", sub:"U.T.M실", info:"만능시험기(UTM) 등 재료 실험 장비가 있는 실습실이에요.", px:535, py:310, lat:null, lng:null, illust:"engineering"},
+  {id:"59-3", name:"자동차실습관", sub:"자동차실습관", info:"자동차공학 관련 실습이 이뤄지는 건물이에요.", px:555, py:290, lat:null, lng:null, illust:"engineering"},
+  {id:"60", name:"박물관", sub:"대학 박물관·전시", info:"학교와 지역의 역사, 유물을 전시하는 박물관이에요.", px:590, py:520, lat:35.9662562, lng:126.9567373, illust:"museum"},
+  {id:"61", name:"도예관", sub:"도예관", info:"도예 실습이 이뤄지는 건물이에요.", px:390, py:170, lat:null, lng:null, illust:"engineering"},
+  {id:"62", name:"조소관", sub:"조소관", info:"조소 실습이 이뤄지는 건물이에요.", px:330, py:193, lat:null, lng:null, illust:"engineering"},
+  {id:"62-1", name:"조소관 별관", sub:"조소관 별관", info:"조소관의 별관 건물이에요.", px:350, py:170, lat:null, lng:null, illust:"engineering"},
+  {id:"63", name:"보건과학대학", sub:"보건과학대학", info:"보건과학대학 소속 강의실과 실습실이 있는 건물이에요.", px:635, py:355, lat:35.9677005, lng:126.9592925, illust:"medical"},
+  {id:"64", name:"승리관", sub:"승리관", info:"체육 관련 시설이 있는 건물이에요.", px:400, py:153, lat:null, lng:null, illust:"office"},
+  {id:"65", name:"문화체육관", sub:"대형 체육·행사시설", info:"각종 체육 행사와 큰 모임이 열리는 대형 체육시설이에요.", px:720, py:565, lat:35.9652510, lng:126.9573320, illust:"sports"},
+  {id:"65-1", name:"문화체육관 별관", sub:"문화체육관 별관", info:"문화체육관의 별관 건물이에요.", px:655, py:525, lat:null, lng:null, illust:"sports"},
+  {id:"66", name:"농식품융합대학", sub:"농식품융합대학", info:"농식품융합대학 소속 강의실과 실습실이 있는 건물이에요.", px:590, py:270, lat:null, lng:null, illust:"engineering"},
+  {id:"67", name:"무빙테크노관", sub:"창업보육센터", info:"창업보육센터가 있어 학생 창업을 지원하는 건물이에요.", px:475, py:175, lat:null, lng:null, illust:"office"},
+  {id:"68", name:"약학대학", sub:"약학대학", info:"약학대학 소속 강의실과 실습실이 있는 건물이에요.", px:660, py:390, lat:35.9669229, lng:126.9595981, illust:"pharmacy"},
+  {id:"69", name:"의과대학", sub:"의학과", info:"의과대학 소속 강의실과 실습실이 있는 건물이에요.", px:572, py:460, lat:35.9657047, lng:126.9590814, illust:"medical"},
+  {id:"69-1", name:"제생의학관", sub:"제생의학관", info:"의학 관련 교육·연구가 이뤄지는 건물이에요.", px:572, py:435, lat:null, lng:null, illust:"medical"},
+  {id:"69-2", name:"제1호 산학협력관", sub:"산학협력관", info:"산학협력 관련 연구와 사업이 이뤄지는 건물이에요.", px:520, py:447, lat:null, lng:null, illust:"office"},
+  {id:"70", name:"한의학전문대학원", sub:"한의학전문대학원", info:"한의학전문대학원 강의실과 연구실이 있는 건물이에요.", px:545, py:488, lat:35.9652841, lng:126.9586815, illust:"medical"},
+  {id:"71", name:"한의과대학", sub:"한의과대학", info:"한의과대학 소속 강의실과 실습실이 있는 건물이에요.", px:585, py:512, lat:null, lng:null, illust:"medical"},
+  {id:"72", name:"사범대학", sub:"사범대학", info:"사범대학 소속 강의실과 교수 연구실이 있는 건물이에요.", px:572, py:335, lat:35.9673117, lng:126.9608757, illust:"humanities"},
+  {id:"72-1", name:"사범대학 부속유치원", sub:"부속유치원", info:"사범대학이 운영하는 부속 유치원이에요.", px:567, py:308, lat:null, lng:null, illust:"humanities"},
+  {id:"73", name:"간호대학", sub:"간호대학", info:"간호대학 소속 강의실과 실습실이 있는 건물이에요.", px:582, py:350, lat:null, lng:null, illust:"medical"},
+  {id:"74", name:"치과대학", sub:"치의학과", info:"치과대학 소속 강의실과 실습실이 있는 건물이에요.", px:643, py:450, lat:35.9650573, lng:126.9606074, illust:"medical"},
+  {id:"74-1", name:"제2치과관", sub:"제2치과관", info:"치과대학의 제2 강의동이에요.", px:688, py:423, lat:null, lng:null, illust:"medical"},
+  {id:"80", name:"원광문화센터", sub:"원광문화센터", info:"각종 문화 행사와 모임이 열리는 공간이에요.", px:605, py:575, lat:null, lng:null, illust:"hall"},
+  {id:"81", name:"원광대학교 한방병원", sub:"한방병원", info:"한방 진료를 받을 수 있는 원광대학교 한방병원이에요.", px:630, py:535, lat:null, lng:null, illust:"medical"},
+  {id:"82", name:"원광대학교병원", sub:"대학병원", info:"종합 진료를 받을 수 있는 원광대학교병원이에요.", px:623, py:488, lat:null, lng:null, illust:"medical"},
+  {id:"83", name:"원광대학교 치과병원", sub:"치과병원", info:"치과 진료를 받을 수 있는 원광대학교 치과병원이에요.", px:697, py:445, lat:null, lng:null, illust:"medical"},
+  {id:"84", name:"권역응급의료센터", sub:"응급의료센터", info:"응급 환자를 진료하는 권역응급의료센터예요.", px:565, py:402, lat:null, lng:null, illust:"medical"},
+  {id:"85", name:"원광대학교병원 장례문화원", sub:"장례문화원", info:"장례 절차를 지원하는 장례문화원이에요.", px:663, py:397, lat:null, lng:null, illust:"hall"},
+  {id:"86", name:"프라임관", sub:"컨퍼런스홀 외", info:"컨퍼런스홀 등 각종 행사가 열리는 건물이에요.", px:550, py:405, lat:35.9684744, lng:126.9579818, illust:"office"},
 ];
 
 const ILLUSTRATIONS = {
@@ -982,12 +1050,15 @@ function renderBuildings(){
   const q = bldgQuery.trim();
   const filtered = BUILDINGS.filter(b => !q || b.name.includes(q) || b.id.includes(q) || b.sub.includes(q));
 
+  // rescue #detail out of the list before wiping innerHTML, so it survives the rebuild
+  document.getElementById('detail-holder').appendChild(document.getElementById('detail'));
+
   if(filtered.length === 0){
     list.innerHTML = '';
     emptyNote.textContent = `'${q}'와 일치하는 건물이 없어요.`;
     return;
   }
-  emptyNote.textContent = "건물을 탭하면 방향과 거리를 볼 수 있어요. 실내 경로 안내는 추후 업데이트될 예정이에요.";
+  emptyNote.textContent = "건물을 탭하면 사진·정보·지도를 볼 수 있어요.";
 
   list.innerHTML = filtered.map(b=>{
     let distTxt = "--";
@@ -995,7 +1066,7 @@ function renderBuildings(){
       const d = haversine(userPos.lat,userPos.lng,b.lat,b.lng);
       distTxt = d<1000 ? `${Math.round(d)}m` : `${(d/1000).toFixed(1)}km`;
     }
-    return `
+    const rowHtml = `
       <div class="bldg-row ${selectedBuilding===b.id?'selected':''}" data-id="${b.id}">
         <div class="bldg-badge" style="font-size:${b.id.length>2?'10px':'12.5px'}">${highlightMatch(b.id, q)}</div>
         <div class="bldg-info">
@@ -1004,10 +1075,19 @@ function renderBuildings(){
         </div>
         <div class="bldg-dist">${distTxt}</div>
       </div>`;
+    return (b.id === selectedBuilding) ? rowHtml + `<div class="bldg-drawer-slot" id="bldg-drawer-slot"></div>` : rowHtml;
   }).join('');
   list.querySelectorAll('.bldg-row').forEach(el=>{
     el.addEventListener('click', ()=> selectBuilding(el.dataset.id));
   });
+
+  const slot = document.getElementById('bldg-drawer-slot');
+  const detailEl = document.getElementById('detail');
+  if(slot){
+    slot.appendChild(detailEl);
+  } else {
+    document.getElementById('detail-holder').appendChild(detailEl);
+  }
 }
 
 document.getElementById('bldg-search-input').addEventListener('input', (e)=>{
@@ -1036,10 +1116,11 @@ function renderIllust(b){
 }
 
 function updateDetail(){
-  const detail = document.getElementById('detail');
-  if(selectedBuilding==null){ detail.classList.remove('show'); return; }
+  if(selectedBuilding==null){ return; }
   const b = BUILDINGS.find(x=>x.id===selectedBuilding);
+  if(!b) return;
   document.getElementById('detail-name').textContent = b.name;
+  document.getElementById('detail-info').textContent = b.info || b.sub;
   renderIllust(b);
 
   const query = encodeURIComponent(`원광대학교 ${b.name}`);
@@ -1051,13 +1132,11 @@ function updateDetail(){
     document.getElementById('detail-dist').textContent = "-- m";
     document.getElementById('detail-dir').textContent = "정확한 위치 정보 준비중이에요";
     document.getElementById('arrow').style.transform = `translate(-50%,-100%) rotate(0deg)`;
-    detail.classList.add('show');
     return;
   }
   if(!userPos){
     document.getElementById('detail-dist').textContent = "위치 확인 필요";
     document.getElementById('detail-dir').textContent = "먼저 내 위치를 찾아주세요";
-    detail.classList.add('show');
     return;
   }
   const d = haversine(userPos.lat,userPos.lng,b.lat,b.lng);
@@ -1065,7 +1144,6 @@ function updateDetail(){
   document.getElementById('detail-dist').textContent = d<1000 ? `${Math.round(d)}m` : `${(d/1000).toFixed(2)}km`;
   document.getElementById('detail-dir').textContent = `${compassLabel(brng)}쪽 (${Math.round(brng)}°)`;
   document.getElementById('arrow').style.transform = `translate(-50%,-100%) rotate(${brng}deg)`;
-  detail.classList.add('show');
 }
 
 document.getElementById('photo-input').addEventListener('change', (e)=>{
@@ -1121,11 +1199,16 @@ function renderMap(){
 }
 
 function selectBuilding(id){
-  selectedBuilding = id;
+  selectedBuilding = (selectedBuilding === id) ? null : id;
   renderBuildings();
   updateDetail();
   renderMap();
+  if(selectedBuilding){
+    document.getElementById('bldg-drawer-slot').scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
 }
+
+document.getElementById('detail-close').addEventListener('click', ()=> selectBuilding(selectedBuilding));
 
 /* ---------------- Pan & zoom ---------------- */
 let mapPanX = 0, mapPanY = 0, mapZoom = 1;
@@ -1276,58 +1359,121 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
 });
 
 /* ---------------- Meditation nap ---------------- */
-let medDurationSec = 10*60;
+let medDurationSec = 1*60;
 let medRemainingSec = medDurationSec;
+let medEndAt = null;
 let medTimerId = null;
 let medBreathTimerId = null;
+let medFeedbackTimerId = null;
 let medRunning = false;
+let medOutputMode = 'earphone';
+let medAudioCtx = null;
 
 function medFormat(s){
   const m = Math.floor(s/60), sec = s%60;
   return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
 }
 function medUpdateDisplay(){
-  document.getElementById('med-time').textContent = medFormat(medRemainingSec);
+  document.getElementById('med-time').textContent = medFormat(Math.max(0, medRemainingSec));
+  const endEl = document.getElementById('med-endtime');
+  if(medRunning && medEndAt){
+    const d = new Date(medEndAt);
+    endEl.textContent = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}에 끝나요`;
+  } else {
+    endEl.textContent = '';
+  }
 }
 
 document.querySelectorAll('.med-chip').forEach(chip=>{
   chip.addEventListener('click', ()=>{
-    if(medRunning) return;
-    document.querySelectorAll('.med-chip').forEach(c=>c.classList.remove('active'));
-    chip.classList.add('active');
-    medDurationSec = Number(chip.dataset.min)*60;
-    medRemainingSec = medDurationSec;
-    medUpdateDisplay();
+    const min = Number(chip.dataset.min);
+    if(medRunning){
+      medEndAt += min*60*1000;
+      medRemainingSec += min*60;
+      medUpdateDisplay();
+      medFlashPhase(`${min}분 추가됐어요`);
+    } else {
+      document.querySelectorAll('.med-chip').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+      medDurationSec = min*60;
+      medRemainingSec = medDurationSec;
+      medUpdateDisplay();
+    }
   });
 });
 
-function medPlayChime(){
+document.querySelectorAll('.med-output').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.med-output').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    medOutputMode = btn.dataset.mode;
+  });
+});
+
+function medUnlockAudio(){
   try{
-    const ctx = new (window.AudioContext||window.webkitAudioContext)();
-    const now = ctx.currentTime;
-    [0, 0.55, 1.1].forEach((offset, i)=>{
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = 640 - i*60;
-      gain.gain.setValueAtTime(0, now+offset);
-      gain.gain.linearRampToValueAtTime(0.2, now+offset+0.06);
-      gain.gain.exponentialRampToValueAtTime(0.001, now+offset+1.3);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(now+offset);
-      osc.stop(now+offset+1.4);
-    });
+    if(!medAudioCtx){
+      medAudioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    }
+    if(medAudioCtx.state === 'suspended'){ medAudioCtx.resume(); }
+    const osc = medAudioCtx.createOscillator();
+    const gain = medAudioCtx.createGain();
+    gain.gain.value = 0.0001;
+    osc.connect(gain).connect(medAudioCtx.destination);
+    osc.start();
+    osc.stop(medAudioCtx.currentTime + 0.05);
   }catch(e){}
-  if(navigator.vibrate) navigator.vibrate([200,100,200,100,400]);
+}
+
+function medPlayTone(ctx, startOffset, freq, len, vol){
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0, now+startOffset);
+  gain.gain.linearRampToValueAtTime(vol, now+startOffset+0.06);
+  gain.gain.exponentialRampToValueAtTime(0.001, now+startOffset+len);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(now+startOffset);
+  osc.stop(now+startOffset+len+0.05);
+}
+
+function medPlayChime(){
+  if(medOutputMode !== 'vibrate'){
+    try{
+      if(!medAudioCtx){ medAudioCtx = new (window.AudioContext||window.webkitAudioContext)(); }
+      if(medAudioCtx.state === 'suspended'){ medAudioCtx.resume(); }
+      const reps = medOutputMode === 'speaker' ? 6 : 3;
+      const vol = medOutputMode === 'speaker' ? 0.35 : 0.2;
+      for(let i=0;i<reps;i++){
+        medPlayTone(medAudioCtx, i*1.5, i%2===0 ? 660 : 600, 1.1, vol);
+      }
+    }catch(e){}
+  }
+  if(navigator.vibrate){
+    navigator.vibrate(medOutputMode === 'earphone' ? [200,100,200] : [250,120,250,120,250,120,500]);
+  }
+}
+
+function medFlashPhase(text){
+  const phaseEl = document.getElementById('med-phase');
+  clearTimeout(medFeedbackTimerId);
+  const prev = medRunning ? (document.getElementById('med-breathe').dataset.inhale === '1' ? '천천히 들이쉬세요' : '천천히 내쉬세요') : phaseEl.textContent;
+  phaseEl.textContent = text;
+  medFeedbackTimerId = setTimeout(()=>{ phaseEl.textContent = prev; }, 1400);
 }
 
 function medStartBreathing(){
   const phaseEl = document.getElementById('med-phase');
-  document.getElementById('med-breathe').classList.add('active');
+  const breatheEl = document.getElementById('med-breathe');
+  breatheEl.classList.add('active');
   let inhale = true;
+  breatheEl.dataset.inhale = '1';
   phaseEl.textContent = '천천히 들이쉬세요';
   medBreathTimerId = setInterval(()=>{
     inhale = !inhale;
+    breatheEl.dataset.inhale = inhale ? '1' : '0';
     phaseEl.textContent = inhale ? '천천히 들이쉬세요' : '천천히 내쉬세요';
   }, 4000);
 }
@@ -1340,21 +1486,26 @@ function medSetIdleUI(){
   const btn = document.getElementById('med-start-btn');
   btn.textContent = '명상 냅 시작';
   btn.classList.remove('stop');
-  document.getElementById('med-presets').style.visibility = 'visible';
+}
+
+function medTick(){
+  if(!medRunning) return;
+  medRemainingSec = Math.round((medEndAt - Date.now())/1000);
+  medUpdateDisplay();
+  if(medRemainingSec<=0) medFinish();
 }
 
 function medStart(){
   medRunning = true;
-  document.getElementById('med-presets').style.visibility = 'hidden';
+  medUnlockAudio();
+  medEndAt = Date.now() + medRemainingSec*1000;
   const btn = document.getElementById('med-start-btn');
   btn.textContent = '중지하기';
   btn.classList.add('stop');
   medStartBreathing();
-  medTimerId = setInterval(()=>{
-    medRemainingSec--;
-    medUpdateDisplay();
-    if(medRemainingSec<=0) medFinish();
-  }, 1000);
+  medUpdateDisplay();
+  clearInterval(medTimerId);
+  medTimerId = setInterval(medTick, 250);
 }
 
 function medFinish(){
@@ -1362,6 +1513,7 @@ function medFinish(){
   medStopBreathing();
   medRunning = false;
   document.getElementById('med-phase').textContent = '일어날 시간이에요';
+  document.getElementById('med-endtime').textContent = '';
   medSetIdleUI();
   medRemainingSec = medDurationSec;
   medUpdateDisplay();
@@ -1380,6 +1532,13 @@ function medStop(){
 
 document.getElementById('med-start-btn').addEventListener('click', ()=>{
   medRunning ? medStop() : medStart();
+});
+
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible' && medRunning){
+    medUnlockAudio();
+    medTick();
+  }
 });
 
 medUpdateDisplay();
