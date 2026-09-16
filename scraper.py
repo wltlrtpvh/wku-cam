@@ -44,7 +44,6 @@ BOARDS = {
     "campus":      "https://www.wku.ac.kr/category/news/school-news",
 }
 
-
 def fetch_list(category, url):
     """게시판 목록 페이지에서 글 제목과 링크를 뽑아온다."""
     res = requests.get(url, headers=HEADERS, timeout=15)
@@ -108,41 +107,55 @@ def fetch_list(category, url):
         print(f"[{category}] 디버그용 HTML 앞부분 500자:\n{res.text[:500]}")
     return unique_items
 
-
 def fetch_body(url):
-    """상세 페이지에서 본문 텍스트를 가져온다 (실패해도 넘어감)."""
+    """상세 페이지에서 본문 텍스트를 가져온다 (실패해도 넘어감).
+
+    이 사이트(Elementor 기반)는 페이지 안에 "관련 글" 미리보기 카드들도
+    <article> 태그로 되어 있어서, 단순히 첫 번째 <article>을 고르면
+    본문이 아니라 엉뚱한 다른 글의 제목/날짜가 딸려온다.
+    그래서 실제 본문 위젯(theme-post-content)을 먼저 찾고,
+    없으면 entry-content, 그래도 없으면 main 순서로 넘어간다.
+    """
     try:
         res = requests.get(url, headers=HEADERS, timeout=15)
         res.raise_for_status()
         soup = BeautifulSoup(res.text, "html.parser")
-        content = soup.select_one("article") or soup.select_one("main")
+        content = (
+            soup.select_one(".elementor-widget-theme-post-content .elementor-widget-container")
+            or soup.select_one('[data-widget_type^="theme-post-content"] .elementor-widget-container')
+            or soup.select_one(".entry-content")
+            or soup.select_one("main")
+        )
         if content:
             text = content.get_text("\n", strip=True)
-            return text[:2000]
+            return text[:2000]  # 너무 길면 잘라서 저장
     except Exception as e:
         print(f"본문 가져오기 실패: {url} ({e})")
     return ""
 
-
 def save_to_supabase(notice):
-    """Supabase REST API로 새 글을 저장 (이미 있으면 무시)."""
+    """Supabase REST API로 글을 저장한다.
+
+    url이 이미 있으면 내용(특히 body)을 최신 값으로 덮어쓴다.
+    (예전엔 중복이면 그냥 무시해서, 한 번 잘못 저장된 빈 본문이
+    영영 안 고쳐지는 문제가 있었다.)
+    """
     if not SUPABASE_URL or not SUPABASE_KEY:
         print("[건너뜀 - 환경변수 없음]", notice["title"])
         return
 
-    endpoint = f"{SUPABASE_URL}/rest/v1/notices"
+    endpoint = f"{SUPABASE_URL}/rest/v1/notices?on_conflict=url"
     headers = {
         "apikey": SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}",
         "Content-Type": "application/json",
-        "Prefer": "resolution=ignore-duplicates",
+        "Prefer": "resolution=merge-duplicates",  # url이 중복이면 최신 내용으로 갱신
     }
     res = requests.post(endpoint, headers=headers, json=notice, timeout=15)
     if res.status_code in (200, 201, 409):
         print("저장됨:", notice["title"])
     else:
         print("저장 실패:", res.status_code, res.text[:200])
-
 
 def main():
     total = 0
@@ -159,7 +172,6 @@ def main():
             total += 1
 
     print(f"완료: 총 {total}건 확인")
-
 
 if __name__ == "__main__":
     main()
