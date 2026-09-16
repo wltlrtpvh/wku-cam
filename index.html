@@ -87,6 +87,15 @@
     align-items:center;
     justify-content:space-between;
     flex:none;
+    max-height:80px;
+    overflow:hidden;
+    transition:max-height 0.28s ease, padding 0.28s ease, opacity 0.2s ease;
+  }
+  header.top.collapsed{
+    max-height:0;
+    padding-top:0;
+    padding-bottom:0;
+    opacity:0;
   }
   header.top h1{
     font-family:'Gowun Batang', serif;
@@ -291,7 +300,7 @@
   }
   .map-controls button{
     width:28px; height:28px;
-    border-radius:8px;
+    border-radius:50%;
     border:1px solid var(--line);
     background:var(--surface);
     color:var(--ink);
@@ -350,7 +359,7 @@
   .detail{
     background:var(--surface);
     border:1px solid var(--line);
-    border-radius:14px;
+    border-radius:12px;
     padding:18px;
     margin:2px 0 18px;
     box-shadow:var(--shadow-lift);
@@ -360,7 +369,7 @@
     margin:-18px -18px 0;
   }
   .detail-photo-wrap .bldg-illust{
-    border-radius:14px 14px 0 0;
+    border-radius:12px 12px 0 0;
     margin-bottom:0;
   }
   .detail-close{
@@ -450,10 +459,28 @@
 
   /* ---- Meditation nap ---- */
   .med-card{
+    position:relative;
     display:flex; flex-direction:column; align-items:center;
     padding:28px 8px 8px;
     text-align:center;
   }
+  .med-settings-btn{
+    position:absolute; top:0; right:8px;
+    width:32px; height:32px; border-radius:50%;
+    border:1px solid var(--line); background:var(--surface);
+    color:var(--ink-soft); font-size:14px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .med-settings-panel{
+    width:100%; max-width:280px;
+    background:var(--surface); border:1px solid var(--line); border-radius:12px;
+    padding:14px 16px; margin:0 0 22px;
+    text-align:left;
+  }
+  .med-settings-panel label{
+    display:block; font-size:11.5px; color:var(--ink-soft); margin-bottom:10px; line-height:1.5;
+  }
+  .med-settings-panel input[type="range"]{ width:100%; accent-color:var(--gold); }
   .med-breathe{
     position:relative;
     width:180px; height:180px;
@@ -557,6 +584,15 @@
   }
   .med-main-btn.stop{
     background:transparent; color:var(--danger); border-color:var(--danger);
+  }
+  .med-main-btn.ringing{
+    background:var(--gold); border-color:var(--gold); color:var(--ink);
+    font-size:16px; font-weight:700;
+    animation:medRingPulse 1s ease-in-out infinite;
+  }
+  @keyframes medRingPulse{
+    0%,100%{ transform:scale(1); box-shadow:0 0 0 0 rgba(169,131,74,0.4); }
+    50%{ transform:scale(1.03); box-shadow:0 0 0 10px rgba(169,131,74,0); }
   }
   .med-hint{
     max-width:280px;
@@ -760,6 +796,8 @@
     <!-- ============ MEDITATION NAP VIEW ============ -->
     <section id="view-meditation" class="view">
       <div class="med-card">
+        <button class="med-settings-btn" id="med-settings-btn" aria-label="설정">⚙️</button>
+
         <div class="med-breathe" id="med-breathe">
           <div class="med-ring r1"></div>
           <div class="med-ring r2"></div>
@@ -770,6 +808,11 @@
           <div class="med-time" id="med-time">10:00</div>
           <div class="med-phase" id="med-phase">시간을 선택하세요</div>
           <div class="med-endtime" id="med-endtime"></div>
+        </div>
+
+        <div class="med-settings-panel" id="med-settings-panel" hidden>
+          <label for="med-volume-slider">알람 볼륨 (처음엔 작게 시작해서 점점 커져요)</label>
+          <input type="range" id="med-volume-slider" min="0" max="100" value="70">
         </div>
 
         <div class="med-outputs" id="med-outputs">
@@ -1358,6 +1401,25 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
   });
 });
 
+/* ---------------- Header auto-hide on scroll ---------------- */
+(function(){
+  const mainEl = document.querySelector('main');
+  const header = document.querySelector('header.top');
+  let lastTop = 0;
+
+  mainEl.addEventListener('scroll', ()=>{
+    const top = mainEl.scrollTop;
+    if(top <= 0){
+      header.classList.remove('collapsed');
+    } else if(top > lastTop + 4){
+      header.classList.add('collapsed');
+    } else if(top < lastTop - 4){
+      header.classList.remove('collapsed');
+    }
+    lastTop = top <= 0 ? 0 : top;
+  }, {passive:true});
+})();
+
 /* ---------------- Meditation nap ---------------- */
 let medDurationSec = 1*60;
 let medRemainingSec = medDurationSec;
@@ -1366,8 +1428,19 @@ let medTimerId = null;
 let medBreathTimerId = null;
 let medFeedbackTimerId = null;
 let medRunning = false;
+let medRinging = false;
 let medOutputMode = 'earphone';
 let medAudioCtx = null;
+let medRingTimerId = null;
+let medRingStartAt = 0;
+const MED_RING_FADE_MS = 20000;
+const MED_RING_INTERVAL_MS = 2200;
+
+let medAlarmVolume = 0.7;
+try{
+  const savedVol = localStorage.getItem('wku_med_volume');
+  if(savedVol != null) medAlarmVolume = Math.max(0, Math.min(1, parseFloat(savedVol)));
+}catch(e){}
 
 function medFormat(s){
   const m = Math.floor(s/60), sec = s%60;
@@ -1410,6 +1483,18 @@ document.querySelectorAll('.med-output').forEach(btn=>{
   });
 });
 
+const medVolumeSlider = document.getElementById('med-volume-slider');
+medVolumeSlider.value = Math.round(medAlarmVolume*100);
+medVolumeSlider.addEventListener('input', (e)=>{
+  medAlarmVolume = Number(e.target.value)/100;
+  try{ localStorage.setItem('wku_med_volume', String(medAlarmVolume)); }catch(err){}
+});
+
+document.getElementById('med-settings-btn').addEventListener('click', ()=>{
+  const panel = document.getElementById('med-settings-panel');
+  panel.hidden = !panel.hidden;
+});
+
 function medUnlockAudio(){
   try{
     if(!medAudioCtx){
@@ -1439,21 +1524,27 @@ function medPlayTone(ctx, startOffset, freq, len, vol){
   osc.stop(now+startOffset+len+0.05);
 }
 
-function medPlayChime(){
-  if(medOutputMode !== 'vibrate'){
+function medPlayChime(volOverride){
+  const baseVol = (typeof volOverride === 'number') ? volOverride : medAlarmVolume;
+  const vol = medOutputMode === 'speaker' ? Math.min(1, baseVol*1.3) : baseVol;
+  if(medOutputMode !== 'vibrate' && vol > 0.01){
     try{
       if(!medAudioCtx){ medAudioCtx = new (window.AudioContext||window.webkitAudioContext)(); }
       if(medAudioCtx.state === 'suspended'){ medAudioCtx.resume(); }
-      const reps = medOutputMode === 'speaker' ? 6 : 3;
-      const vol = medOutputMode === 'speaker' ? 0.35 : 0.2;
-      for(let i=0;i<reps;i++){
-        medPlayTone(medAudioCtx, i*1.5, i%2===0 ? 660 : 600, 1.1, vol);
-      }
+      medPlayTone(medAudioCtx, 0, 660, 0.55, vol);
+      medPlayTone(medAudioCtx, 0.55, 600, 0.55, vol);
     }catch(e){}
   }
   if(navigator.vibrate){
-    navigator.vibrate(medOutputMode === 'earphone' ? [200,100,200] : [250,120,250,120,250,120,500]);
+    navigator.vibrate(medOutputMode === 'earphone' ? [150,80,150] : [200,100,200,100,300]);
   }
+}
+
+function medRingTick(){
+  const elapsed = Date.now() - medRingStartAt;
+  const fade = Math.min(1, elapsed / MED_RING_FADE_MS);
+  const vol = medAlarmVolume * (0.12 + 0.88*fade);
+  medPlayChime(vol);
 }
 
 function medFlashPhase(text){
@@ -1486,6 +1577,7 @@ function medSetIdleUI(){
   const btn = document.getElementById('med-start-btn');
   btn.textContent = '명상 냅 시작';
   btn.classList.remove('stop');
+  btn.classList.remove('ringing');
 }
 
 function medTick(){
@@ -1512,12 +1604,31 @@ function medFinish(){
   clearInterval(medTimerId);
   medStopBreathing();
   medRunning = false;
+  medRinging = true;
   document.getElementById('med-phase').textContent = '일어날 시간이에요';
   document.getElementById('med-endtime').textContent = '';
-  medSetIdleUI();
+  document.getElementById('med-outputs').style.visibility = 'hidden';
+  document.getElementById('med-presets').style.visibility = 'hidden';
+  const btn = document.getElementById('med-start-btn');
+  btn.textContent = '🔔 알람 중지하기';
+  btn.classList.remove('stop');
+  btn.classList.add('ringing');
+
+  medRingStartAt = Date.now();
+  medRingTick();
+  clearInterval(medRingTimerId);
+  medRingTimerId = setInterval(medRingTick, MED_RING_INTERVAL_MS);
+}
+
+function medDismissAlarm(){
+  clearInterval(medRingTimerId);
+  medRinging = false;
   medRemainingSec = medDurationSec;
   medUpdateDisplay();
-  medPlayChime();
+  document.getElementById('med-phase').textContent = '시간을 선택하세요';
+  document.getElementById('med-outputs').style.visibility = 'visible';
+  document.getElementById('med-presets').style.visibility = 'visible';
+  medSetIdleUI();
 }
 
 function medStop(){
@@ -1531,13 +1642,15 @@ function medStop(){
 }
 
 document.getElementById('med-start-btn').addEventListener('click', ()=>{
-  medRunning ? medStop() : medStart();
+  if(medRinging){ medDismissAlarm(); }
+  else if(medRunning){ medStop(); }
+  else { medStart(); }
 });
 
 document.addEventListener('visibilitychange', ()=>{
-  if(document.visibilityState === 'visible' && medRunning){
-    medUnlockAudio();
-    medTick();
+  if(document.visibilityState === 'visible'){
+    if(medRunning){ medUnlockAudio(); medTick(); }
+    if(medRinging){ medUnlockAudio(); }
   }
 });
 
