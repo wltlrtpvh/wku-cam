@@ -57,20 +57,22 @@
   }
 
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
+  html,body{margin:0;padding:0;height:100%;}
   body{
     background:var(--bg);
     color:var(--ink);
     font-family:'Noto Sans KR', sans-serif;
     -webkit-font-smoothing:antialiased;
-    min-height:100vh;
+    height:100vh;
+    height:100dvh;
     display:flex;
     justify-content:center;
   }
   #app{
     width:100%;
     max-width:480px;
-    min-height:100vh;
+    height:100vh;
+    height:100dvh;
     display:flex;
     flex-direction:column;
     background:var(--bg);
@@ -78,57 +80,40 @@
   }
 
   header.top{
-    padding:34px 22px 22px;
+    padding:16px 20px;
     background:var(--ink);
     color:var(--bg);
-    position:relative;
-    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex:none;
+  }
+  header.top h1{
+    font-family:'Gowun Batang', serif;
+    font-weight:700;
+    font-size:21px;
+    margin:0;
+    letter-spacing:0.01em;
   }
   header.top .ring{
-    position:absolute;
-    right:22px; top:24px;
-    width:46px; height:46px;
+    position:relative;
+    width:32px; height:32px;
     border:1px solid var(--gold);
     border-radius:50%;
-    opacity:0.9;
+    flex:none;
   }
   header.top .ring::after{
     content:"WKU";
     position:absolute; inset:0;
     display:flex; align-items:center; justify-content:center;
     font-family:'Gowun Batang', serif;
-    font-size:10px; letter-spacing:0.04em;
+    font-size:8px; letter-spacing:0.04em;
     color:var(--gold);
-  }
-  header.top .eyebrow{
-    font-size:11.5px;
-    color:var(--gold);
-    letter-spacing:0.06em;
-    margin:0 0 8px;
-  }
-  header.top h1{
-    font-family:'Gowun Batang', serif;
-    font-weight:700;
-    font-size:27px;
-    margin:0 0 6px;
-    letter-spacing:0.01em;
-    max-width:75%;
-  }
-  header.top p{
-    margin:0;
-    font-size:13.5px;
-    color:#d6d5cf;
-    max-width:78%;
-    line-height:1.55;
-  }
-  header.top .rule{
-    width:28px; height:2px; background:var(--gold);
-    margin-top:16px;
   }
 
   main{
     flex:1;
-    padding:22px 20px 96px;
+    padding:22px 20px 28px;
     overflow-y:auto;
   }
 
@@ -501,35 +486,30 @@
   }
 
   nav.tabbar{
-    position:absolute;
-    left:0;right:0;bottom:0;
+    flex:none;
     display:flex;
     background:var(--surface);
-    border-top:1px solid var(--line);
-    padding:10px 10px calc(10px + env(safe-area-inset-bottom));
-    transform:translateY(0);
-    transition:transform 0.25s ease;
-  }
-  nav.tabbar.hidden{
-    transform:translateY(100%);
+    border-bottom:1px solid var(--line);
+    padding:0 20px;
   }
   nav.tabbar button{
     flex:1;
     background:transparent;
     border:none;
+    border-bottom:2px solid transparent;
     display:flex;
-    flex-direction:column;
     align-items:center;
-    gap:4px;
+    justify-content:center;
+    gap:6px;
     color:var(--ink-soft);
     font-family:'Noto Sans KR', sans-serif;
-    font-size:11px;
+    font-size:13.5px;
     font-weight:500;
     cursor:pointer;
-    padding:4px 0;
+    padding:13px 0;
   }
-  nav.tabbar button .ic{font-size:18px; opacity:0.75;}
-  nav.tabbar button.active{color:var(--gold-deep); font-weight:600;}
+  nav.tabbar button .ic{font-size:15px; opacity:0.7;}
+  nav.tabbar button.active{color:var(--gold-deep); font-weight:600; border-bottom-color:var(--gold);}
   nav.tabbar button.active .ic{opacity:1;}
   :root[data-theme="dark"] nav.tabbar button.active, :root:not([data-theme="light"]) nav.tabbar button.active{color:var(--gold);}
 </style>
@@ -538,12 +518,14 @@
 <div id="app">
 
   <header class="top">
+    <h1>원광</h1>
     <div class="ring"></div>
-    <p class="eyebrow">Wonkwang University</p>
-    <h1>원광 캠퍼스</h1>
-    <p>공지·장학 정보와 강의실 길찾기를 한 곳에서</p>
-    <div class="rule"></div>
   </header>
+
+  <nav class="tabbar">
+    <button class="tab-btn active" data-view="notice"><span class="ic">📋</span>공지사항</button>
+    <button class="tab-btn" data-view="nav"><span class="ic">🧭</span>길찾기</button>
+  </nav>
 
   <main>
     <!-- ============ NOTICE VIEW ============ -->
@@ -615,11 +597,6 @@
       <div class="empty-note" id="bldg-empty">건물을 탭하면 방향과 거리를 볼 수 있어요. 실내 경로 안내는 추후 업데이트될 예정이에요.</div>
     </section>
   </main>
-
-  <nav class="tabbar">
-    <button class="tab-btn active" data-view="notice"><span class="ic">📋</span>공지사항</button>
-    <button class="tab-btn" data-view="nav"><span class="ic">🧭</span>길찾기</button>
-  </nav>
 
 </div>
 
@@ -1133,38 +1110,28 @@ document.getElementById('locate-btn').addEventListener('click', ()=>{
 });
 
 /* ---------------- Tabs ---------------- */
+let noticeScrollTop = 0;
+let currentView = 'notice';
+
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
+    const v = btn.dataset.view;
+    if(v === currentView) return;
+    const mainEl = document.querySelector('main');
+
+    if(currentView === 'notice'){
+      noticeScrollTop = mainEl.scrollTop;
+    }
+
     document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
-    const v = btn.dataset.view;
     document.querySelectorAll('.view').forEach(sec=>sec.classList.remove('active'));
     document.getElementById(v==='notice' ? 'view-notice' : 'view-nav').classList.add('active');
-    document.querySelector('main').scrollTop = 0;
-    document.querySelector('nav.tabbar').classList.remove('hidden');
+
+    mainEl.scrollTop = (v === 'notice') ? noticeScrollTop : 0;
+    currentView = v;
   });
 });
-
-/* ---------------- Tabbar auto-hide on scroll ---------------- */
-(function(){
-  const mainEl = document.querySelector('main');
-  const tabbar = document.querySelector('nav.tabbar');
-  let lastTop = 0;
-  let stopTimer = null;
-
-  mainEl.addEventListener('scroll', ()=>{
-    const top = mainEl.scrollTop;
-    if(top > lastTop && top > 30){
-      tabbar.classList.add('hidden');   // 아래로 스크롤 → 숨김
-    } else {
-      tabbar.classList.remove('hidden'); // 위로 스크롤 → 다시 표시
-    }
-    lastTop = top <= 0 ? 0 : top;
-
-    clearTimeout(stopTimer);
-    stopTimer = setTimeout(()=> tabbar.classList.remove('hidden'), 250); // 멈추면 다시 표시
-  }, {passive:true});
-})();
 
 /* ---------------- Init ---------------- */
 document.getElementById('notice-modal').addEventListener('click', (e)=>{
