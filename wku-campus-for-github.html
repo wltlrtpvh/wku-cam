@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>원광 캠퍼스 — 공지 &amp; 길찾기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: #16171c;
+    --ink-soft: #5c5d63;
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --line: #e7e5e0;
+    --gold: #a9834a;
+    --gold-deep: #6e5427;
+    --gold-tint: #f2e9d8;
+    --sage: #3f5b4d;
+    --sage-tint: #e6ede9;
+    --danger: #8a3a2c;
+    --shadow-soft: 0 1px 2px rgba(20,20,22,0.04);
+    --shadow-lift: 0 10px 30px rgba(20,20,22,0.10);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink: #f3f2ee;
+      --ink-soft: #b5b3ac;
+      --bg: #0d0e10;
+      --surface: #17181b;
+      --line: #2a2b2f;
+      --gold: #d2ab6c;
+      --gold-deep: #e7c98d;
+      --gold-tint: #362c1b;
+      --sage: #94b4a1;
+      --sage-tint: #1c2621;
+      --danger: #e59a83;
+      --shadow-soft: 0 1px 2px rgba(0,0,0,0.3);
+      --shadow-lift: 0 10px 30px rgba(0,0,0,0.45);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink: #f3f2ee;
+    --ink-soft: #b5b3ac;
+    --bg: #0d0e10;
+    --surface: #17181b;
+    --line: #2a2b2f;
+    --gold: #d2ab6c;
+    --gold-deep: #e7c98d;
+    --gold-tint: #362c1b;
+    --sage: #94b4a1;
+    --sage-tint: #1c2621;
+    --danger: #e59a83;
+    --shadow-soft: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-lift: 0 10px 30px rgba(0,0,0,0.45);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Noto Sans KR', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+  }
+  #app{
+    width:100%;
+    max-width:480px;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    background:var(--bg);
+    position:relative;
+  }
+
+  header.top{
+    padding:34px 22px 22px;
+    background:var(--ink);
+    color:var(--bg);
+    position:relative;
+    overflow:hidden;
+  }
+  header.top .ring{
+    position:absolute;
+    right:22px; top:24px;
+    width:46px; height:46px;
+    border:1px solid var(--gold);
+    border-radius:50%;
+    opacity:0.9;
+  }
+  header.top .ring::after{
+    content:"WKU";
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Gowun Batang', serif;
+    font-size:10px; letter-spacing:0.04em;
+    color:var(--gold);
+  }
+  header.top .eyebrow{
+    font-size:11.5px;
+    color:var(--gold);
+    letter-spacing:0.06em;
+    margin:0 0 8px;
+  }
+  header.top h1{
+    font-family:'Gowun Batang', serif;
+    font-weight:700;
+    font-size:27px;
+    margin:0 0 6px;
+    letter-spacing:0.01em;
+    max-width:75%;
+  }
+  header.top p{
+    margin:0;
+    font-size:13.5px;
+    color:#d6d5cf;
+    max-width:78%;
+    line-height:1.55;
+  }
+  header.top .rule{
+    width:28px; height:2px; background:var(--gold);
+    margin-top:16px;
+  }
+
+  main{
+    flex:1;
+    padding:22px 20px 96px;
+    overflow-y:auto;
+  }
+
+  .view{display:none;}
+  .view.active{display:block;}
+
+  /* ---- Chips ---- */
+  .chips{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding-bottom:4px;
+    margin-bottom:20px;
+  }
+  .chip{
+    flex:none;
+    padding:8px 16px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--ink-soft);
+    font-size:13px;
+    font-weight:500;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .chip.active{
+    background:var(--ink);
+    border-color:var(--ink);
+    color:var(--gold-deep);
+    font-weight:600;
+  }
+  :root[data-theme="dark"] .chip.active, :root:not([data-theme="light"]) .chip.active{
+    color:var(--gold);
+  }
+
+  /* ---- Notice list (hairline rows, no boxed cards) ---- */
+  .group-label{
+    font-size:12px;
+    font-weight:600;
+    color:var(--gold-deep);
+    margin:26px 0 4px;
+  }
+  .group-label:first-child{ margin-top:0; }
+
+  .tag{
+    display:inline-block;
+    font-size:11px;
+    font-weight:600;
+    color:var(--ink-soft);
+  }
+  .tag::before{
+    content:"";
+    display:inline-block;
+    width:5px; height:5px; border-radius:50%;
+    background:var(--gold);
+    margin-right:6px;
+    vertical-align:middle;
+  }
+
+  .notice-card{
+    padding:16px 2px;
+    border-bottom:1px solid var(--line);
+    cursor:pointer;
+  }
+  .notice-card:first-of-type{ border-top:1px solid var(--line); }
+  .notice-card .tag{ margin-bottom:7px; }
+  .notice-card h3{
+    font-size:15.5px;
+    line-height:1.55;
+    margin:0 0 8px;
+    font-weight:600;
+    color:var(--ink);
+  }
+  .notice-card .meta{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    display:flex;
+    justify-content:space-between;
+  }
+  .notice-card .meta .d-day{
+    color:var(--danger);
+    font-weight:700;
+  }
+
+  .section-label{
+    font-size:12px;
+    font-weight:600;
+    color:var(--ink-soft);
+    margin:26px 0 12px;
+  }
+
+  /* ---- Nav tab ---- */
+  .locate-bar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:13px 15px;
+    margin-bottom:18px;
+  }
+  .locate-bar .dot{
+    width:8px;height:8px;border-radius:50%;
+    background:#c2c0b8;
+    flex:none;
+  }
+  .locate-bar .dot.live{background:var(--sage);}
+  .locate-bar .txt{flex:1; font-size:13px; color:var(--ink-soft);}
+  .locate-bar button{
+    border:1px solid var(--ink);
+    background:var(--ink);
+    color:var(--bg);
+    font-weight:600;
+    font-size:12.5px;
+    padding:8px 15px;
+    border-radius:999px;
+    cursor:pointer;
+  }
+
+  .map-card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:18px 18px 12px;
+    margin-bottom:20px;
+  }
+  .map-card svg{width:100%; height:auto; display:block;}
+  .map-svg-wrap{ position:relative; }
+  .map-svg-wrap svg{ touch-action:none; cursor:grab; border-radius:8px; background:linear-gradient(180deg, var(--bg), var(--surface)); }
+  .map-svg-wrap svg:active{ cursor:grabbing; }
+  .map-controls{
+    position:absolute; top:8px; right:8px;
+    display:flex; flex-direction:column; gap:4px;
+  }
+  .map-controls button{
+    width:28px; height:28px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:var(--surface);
+    color:var(--ink);
+    font-size:15px; font-weight:700;
+    cursor:pointer;
+    box-shadow:var(--shadow-soft);
+  }
+  .bldg-search{
+    display:flex; align-items:center; gap:8px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:9px 12px;
+    margin-bottom:14px;
+    background:var(--surface);
+  }
+  .bldg-search .search-ic{ font-size:13px; opacity:0.6; }
+  .bldg-search input{
+    flex:1; border:none; outline:none; background:transparent;
+    font-size:13.5px; color:var(--ink); font-family:'Noto Sans KR', sans-serif;
+  }
+  .bldg-search input::placeholder{ color:var(--ink-soft); }
+  .hl-match{ color:var(--gold-deep); font-weight:700; }
+  .map-node text{
+    font-family:'Noto Sans KR', sans-serif;
+    font-size:9px;
+    font-weight:500;
+    fill:var(--ink-soft);
+  }
+  .map-node .badge-bg{ fill:var(--surface); stroke:var(--ink); stroke-width:1.2; }
+  .map-node.selected .badge-bg{ fill:var(--gold); stroke:var(--gold); }
+  .map-node .badge-roof{ fill:var(--ink); opacity:0.7; }
+  .map-node.selected .badge-roof{ fill:var(--surface); opacity:0.9; }
+  .map-node text.badge-num{
+    font-size:8px;
+    font-weight:700;
+    fill:var(--ink);
+    text-anchor:middle;
+  }
+  .map-node.selected text.badge-num{ fill:var(--surface); }
+  .user-dot{ fill:var(--sage); stroke:var(--surface); stroke-width:2; }
+  .user-pulse{
+    fill:none; stroke:var(--sage); stroke-width:1.5; opacity:0.6;
+    animation:pulse 2s ease-out infinite;
+    transform-origin:center;
+  }
+  @keyframes pulse{
+    0%{ r:5; opacity:0.6; }
+    100%{ r:18; opacity:0; }
+  }
+  .path-line{ stroke:var(--gold); stroke-width:1.2; stroke-dasharray:1 4; stroke-linecap:round; }
+  .scale-row{
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:11px; color:var(--ink-soft); margin-top:8px;
+  }
+  .scale-bar{ display:flex; align-items:center; gap:6px; }
+  .scale-bar .line{ width:32px; height:1px; background:var(--ink-soft); }
+
+  .bldg-row{
+    display:flex;
+    align-items:center;
+    gap:13px;
+    padding:14px 2px;
+    border-bottom:1px solid var(--line);
+    cursor:pointer;
+  }
+  .bldg-row:first-of-type{ border-top:1px solid var(--line); }
+  .bldg-row.selected .bldg-badge{
+    background:var(--gold); border-color:var(--gold); color:var(--surface);
+  }
+  .bldg-row.selected .bldg-info .name{ color:var(--gold-deep); }
+  .bldg-badge{
+    flex:none;
+    width:34px;height:34px;
+    border-radius:50%;
+    border:1.3px solid var(--ink);
+    background:transparent;
+    color:var(--ink);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:600;
+    font-size:12.5px;
+  }
+  .bldg-info{flex:1;}
+  .bldg-info .name{font-size:15px;font-weight:600;}
+  .bldg-info .sub{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+  .bldg-dist{font-size:13px;font-weight:700;color:var(--sage); text-align:right; min-width:56px;}
+
+  .detail{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:22px;
+    margin-bottom:20px;
+    box-shadow:var(--shadow-lift);
+    display:none;
+  }
+  .detail.show{display:block;}
+  .detail h2{
+    font-family:'Gowun Batang', serif;
+    font-size:19px;
+    margin:0 0 14px;
+    font-weight:700;
+  }
+  .compass-wrap{
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .compass{
+    position:relative;
+    width:112px;height:112px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    flex:none;
+  }
+  .compass .n{
+    position:absolute; top:7px; left:50%; transform:translateX(-50%);
+    font-size:9.5px; font-weight:600; color:var(--ink-soft);
+  }
+  .compass .arrow{
+    position:absolute;
+    left:50%; top:50%;
+    width:2.5px; height:40px;
+    background:var(--gold);
+    transform-origin:50% 100%;
+    transform:translate(-50%,-100%) rotate(0deg);
+  }
+  .compass .arrow::after{
+    content:"";
+    position:absolute;
+    top:-7px; left:50%;
+    transform:translateX(-50%);
+    border-left:6px solid transparent;
+    border-right:6px solid transparent;
+    border-bottom:10px solid var(--gold);
+  }
+  .compass .center-dot{
+    position:absolute; left:50%; top:50%;
+    width:6px;height:6px;border-radius:50%;
+    background:var(--ink);
+    transform:translate(-50%,-50%);
+  }
+  .compass-stats{flex:1;}
+  .compass-stats .dist{
+    font-size:26px;
+    font-weight:700;
+    font-family:'Gowun Batang', serif;
+    color:var(--ink);
+  }
+  .compass-stats .dir{
+    font-size:13px;
+    color:var(--ink-soft);
+    margin-top:4px;
+  }
+  .compass-stats .note{
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin-top:10px;
+    line-height:1.5;
+  }
+
+  .empty-note{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    text-align:center;
+    padding:16px 6px 4px;
+    line-height:1.6;
+  }
+
+  .modal-overlay{
+    position:fixed; inset:0;
+    background:rgba(10,10,12,0.55);
+    display:flex; align-items:flex-end; justify-content:center;
+    opacity:0; pointer-events:none;
+    transition:opacity 0.2s ease;
+    z-index:50;
+  }
+  .modal-overlay.show{ opacity:1; pointer-events:auto; }
+  .modal-card{
+    width:100%; max-width:480px;
+    background:var(--surface);
+    border-radius:20px 20px 0 0;
+    padding:24px 22px calc(30px + env(safe-area-inset-bottom));
+    max-height:78vh;
+    overflow-y:auto;
+    transform:translateY(12px);
+    transition:transform 0.2s ease;
+  }
+  .modal-overlay.show .modal-card{ transform:translateY(0); }
+  .modal-card .modal-top{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
+  .modal-card .close-btn{
+    border:1px solid var(--line); background:transparent; color:var(--ink-soft);
+    width:26px;height:26px;border-radius:50%;
+    font-size:12px; cursor:pointer; flex:none;
+  }
+  .modal-card h2{
+    font-family:'Gowun Batang', serif;
+    font-size:19px; line-height:1.45; margin:12px 0 8px;
+    font-weight:700;
+  }
+  .modal-card .modal-date{ font-size:12px; color:var(--ink-soft); margin-bottom:18px; }
+  .modal-card .modal-body{
+    font-size:14.5px; line-height:1.85; color:var(--ink);
+    white-space:pre-line;
+    border-top:1px solid var(--line);
+    padding-top:18px;
+  }
+
+  .bldg-illust{
+    width:100%; height:150px;
+    border-radius:10px;
+    margin-bottom:16px;
+    background:var(--bg);
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+    position:relative;
+  }
+  .bldg-illust svg{ height:80%; width:auto; }
+  .bldg-illust img{ width:100%; height:100%; object-fit:cover; }
+
+  .photo-actions{
+    display:flex; gap:14px; margin:-8px 0 16px;
+    font-size:12px;
+  }
+  .photo-actions label, .photo-actions span{
+    color:var(--gold-deep); font-weight:600; cursor:pointer;
+  }
+  .photo-actions .remove{ color:var(--ink-soft); font-weight:500; display:none; }
+  .photo-actions.has-photo .remove{ display:inline; }
+
+  .map-app-row{ display:flex; gap:8px; margin-top:16px; }
+  .map-app-btn{
+    flex:1;
+    text-align:center;
+    text-decoration:none;
+    font-size:12.5px; font-weight:600;
+    padding:10px 6px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    color:var(--ink);
+    background:transparent;
+  }
+
+  nav.tabbar{
+    position:absolute;
+    left:0;right:0;bottom:0;
+    display:flex;
+    background:var(--surface);
+    border-top:1px solid var(--line);
+    padding:10px 10px calc(10px + env(safe-area-inset-bottom));
+    transform:translateY(0);
+    transition:transform 0.25s ease;
+  }
+  nav.tabbar.hidden{
+    transform:translateY(100%);
+  }
+  nav.tabbar button{
+    flex:1;
+    background:transparent;
+    border:none;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    color:var(--ink-soft);
+    font-family:'Noto Sans KR', sans-serif;
+    font-size:11px;
+    font-weight:500;
+    cursor:pointer;
+    padding:4px 0;
+  }
+  nav.tabbar button .ic{font-size:18px; opacity:0.75;}
+  nav.tabbar button.active{color:var(--gold-deep); font-weight:600;}
+  nav.tabbar button.active .ic{opacity:1;}
+  :root[data-theme="dark"] nav.tabbar button.active, :root:not([data-theme="light"]) nav.tabbar button.active{color:var(--gold);}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header class="top">
+    <div class="ring"></div>
+    <p class="eyebrow">Wonkwang University</p>
+    <h1>원광 캠퍼스</h1>
+    <p>공지·장학 정보와 강의실 길찾기를 한 곳에서</p>
+    <div class="rule"></div>
+  </header>
+
+  <main>
+    <!-- ============ NOTICE VIEW ============ -->
+    <section id="view-notice" class="view active">
+      <div class="chips" id="chips"></div>
+      <div id="notice-list"></div>
+    </section>
+
+    <!-- ============ NAV VIEW ============ -->
+    <section id="view-nav" class="view">
+      <div class="locate-bar">
+        <div class="dot" id="gps-dot"></div>
+        <div class="txt" id="gps-text">아직 위치를 확인하지 않았어요</div>
+        <button id="locate-btn">내 위치 찾기</button>
+      </div>
+
+      <div class="map-card">
+        <div class="map-svg-wrap">
+          <svg id="campus-svg" viewBox="0 0 300 220"></svg>
+          <div class="map-controls">
+            <button id="zoom-in" aria-label="확대">+</button>
+            <button id="zoom-out" aria-label="축소">−</button>
+            <button id="zoom-reset" aria-label="원래대로">⟲</button>
+          </div>
+        </div>
+        <div class="scale-row">
+          <div class="scale-bar"><div class="line"></div><span id="scale-label">50m</span></div>
+          <span>드래그로 이동 · 버튼으로 확대/축소</span>
+        </div>
+      </div>
+
+      <div class="detail" id="detail">
+        <div class="bldg-illust" id="bldg-illust"></div>
+        <div class="photo-actions" id="photo-actions">
+          <label for="photo-input">📷 사진 추가</label>
+          <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none">
+          <span class="remove" id="photo-remove">사진 삭제</span>
+        </div>
+        <h2 id="detail-name">건물명</h2>
+        <div class="compass-wrap">
+          <div class="compass">
+            <div class="n">N</div>
+            <div class="arrow" id="arrow"></div>
+            <div class="center-dot"></div>
+          </div>
+          <div class="compass-stats">
+            <div class="dist" id="detail-dist">-- m</div>
+            <div class="dir" id="detail-dir">방향 확인 중</div>
+            <div class="note">화살표는 실제 이동 경로가 아닌, 현재 위치에서 목적지까지의 직선 나침반 방향(진북 기준)을 가리켜요.</div>
+          </div>
+        </div>
+        <div class="map-app-row">
+          <a id="open-google" class="map-app-btn google" target="_blank" rel="noopener">구글지도</a>
+          <a id="open-kakao" class="map-app-btn kakao" target="_blank" rel="noopener">카카오맵</a>
+          <a id="open-naver" class="map-app-btn naver" target="_blank" rel="noopener">네이버지도</a>
+        </div>
+      </div>
+
+      <div class="section-label">캠퍼스 건물</div>
+      <div class="bldg-search">
+        <span class="search-ic">🔍</span>
+        <input id="bldg-search-input" type="text" inputmode="search" placeholder="건물 이름 또는 번호로 검색 (예: 60주년, 59)">
+      </div>
+      <div id="bldg-list"></div>
+      <div class="empty-note" id="bldg-empty">건물을 탭하면 방향과 거리를 볼 수 있어요. 실내 경로 안내는 추후 업데이트될 예정이에요.</div>
+    </section>
+  </main>
+
+  <nav class="tabbar">
+    <button class="tab-btn active" data-view="notice"><span class="ic">📋</span>공지사항</button>
+    <button class="tab-btn" data-view="nav"><span class="ic">🧭</span>길찾기</button>
+  </nav>
+
+</div>
+
+<div class="modal-overlay" id="notice-modal">
+  <div class="modal-card">
+    <div class="modal-top">
+      <span id="modal-tag" class="tag">학사공지</span>
+      <button class="close-btn" onclick="closeNoticeModal()">✕</button>
+    </div>
+    <h2 id="modal-title">제목</h2>
+    <div class="modal-date" id="modal-date">날짜</div>
+    <div class="modal-body" id="modal-body">본문</div>
+    <a id="modal-link" href="#" target="_blank" rel="noopener" style="display:none; margin-top:16px; font-size:13px; font-weight:600; color:var(--gold-deep);">원문에서 보기 ↗</a>
+  </div>
+</div>
+
+<script>
+/* ---------------- 실제 공지 데이터 (Supabase에서 불러옴) ---------------- */
+const SUPABASE_URL = "https://aopfvqjllmzulxbtalmo.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvcGZ2cWpsbG16dWx4YnRhbG1vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1NDIwMzMsImV4cCI6MjEwNTExODAzM30.iKC5CfqUM3qy6uJbZSGbOwQyrM9bkLWosScKdieDUkM";
+
+let NOTICES = [];
+const CAT_LABEL = {academic:"학사공지", scholarship:"장학공지", job:"채용공고", campus:"교내소식"};
+const CAT_ORDER = ["academic","scholarship","job","campus"];
+let activeCat = "all";
+
+async function loadNotices(){
+  const list = document.getElementById('notice-list');
+  list.innerHTML = `<div class="empty-note">공지사항을 불러오는 중...</div>`;
+  try{
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/notices?select=*&order=created_at.desc&limit=100`,
+      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
+    );
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const rows = await res.json();
+    NOTICES = rows.map(row=>({
+      cat: row.category,
+      title: row.title,
+      date: row.posted_date || "날짜 미기재",
+      ddays: null,
+      body: row.body || "상세 내용이 준비되지 않았어요.",
+      url: row.url || null,
+    }));
+  } catch(e){
+    console.error("공지 불러오기 실패:", e);
+    list.innerHTML = `<div class="empty-note">공지사항을 불러오지 못했어요. 잠시 후 다시 시도해주세요.</div>`;
+    return;
+  }
+  renderNotices();
+}
+
+function renderChips(){
+  const wrap = document.getElementById('chips');
+  const cats = ["all", ...CAT_ORDER];
+  wrap.innerHTML = cats.map(c=>{
+    const label = c==="all" ? "전체" : CAT_LABEL[c];
+    return `<div class="chip ${c===activeCat?'active':''}" data-cat="${c}">${label}</div>`;
+  }).join('');
+  wrap.querySelectorAll('.chip').forEach(el=>{
+    el.addEventListener('click', ()=>{ activeCat = el.dataset.cat; renderChips(); renderNotices(); });
+  });
+}
+
+function noticeCardHtml(n){
+  const idx = NOTICES.indexOf(n);
+  const ddayHtml = n.ddays!=null ? `<span class="d-day">D-${n.ddays}</span>` : '';
+  return `
+    <div class="notice-card" data-idx="${idx}">
+      <span class="tag">${CAT_LABEL[n.cat]}</span>
+      <h3>${n.title}</h3>
+      <div class="meta"><span>${n.date}</span>${ddayHtml}</div>
+    </div>`;
+}
+
+function renderNotices(){
+  const list = document.getElementById('notice-list');
+
+  if(activeCat === "all"){
+    // grouped by category
+    let html = "";
+    CAT_ORDER.forEach(cat=>{
+      const items = NOTICES.filter(n=>n.cat===cat);
+      if(items.length===0) return;
+      html += `<div class="group-label">${CAT_LABEL[cat]}</div>`;
+      html += items.map(noticeCardHtml).join('');
+    });
+    list.innerHTML = html || `<div class="empty-note">등록된 공지가 없어요.</div>`;
+  } else {
+    const items = NOTICES.filter(n => n.cat===activeCat);
+    list.innerHTML = items.map(noticeCardHtml).join('') || `<div class="empty-note">해당 카테고리의 공지가 없어요.</div>`;
+  }
+
+  list.querySelectorAll('.notice-card').forEach(el=>{
+    el.addEventListener('click', ()=> openNoticeModal(Number(el.dataset.idx)));
+  });
+}
+
+function openNoticeModal(idx){
+  const n = NOTICES[idx];
+  document.getElementById('modal-tag').textContent = CAT_LABEL[n.cat];
+  document.getElementById('modal-title').textContent = n.title;
+  document.getElementById('modal-date').textContent = n.date;
+  document.getElementById('modal-body').textContent = n.body || "상세 내용이 준비되지 않았어요.";
+  const linkEl = document.getElementById('modal-link');
+  if(n.url){
+    linkEl.href = n.url;
+    linkEl.style.display = 'inline-block';
+  } else {
+    linkEl.style.display = 'none';
+  }
+  document.getElementById('notice-modal').classList.add('show');
+}
+function closeNoticeModal(){
+  document.getElementById('notice-modal').classList.remove('show');
+}
+
+/* ---------------- Campus buildings (실측 좌표 기반) ---------------- */
+const BUILDINGS = [
+  {id:"12", name:"대학본부", sub:"행정·민원 업무", lat:35.9690386, lng:126.9537042, illust:"office"},
+  {id:"14", name:"학생지원관", sub:"학생 상담·지원", lat:35.9697237, lng:126.9545952, illust:"office"},
+  {id:"14-1", name:"중앙도서관", sub:"자료실·열람실", lat:35.9702607, lng:126.9553666, illust:"library"},
+  {id:"16", name:"60주년기념관", sub:"WON웰니스센터", lat:35.9658951, lng:126.9544319, illust:"hall"},
+  {id:"18", name:"원체육관", sub:"실내 체육시설", lat:35.968256, lng:126.9549874, illust:"sports"},
+  {id:"56", name:"인문관", sub:"인문대학 · 국어국문학과 외", lat:35.9712557, lng:126.9587092, illust:"humanities"},
+  {id:"51", name:"사회관", sub:"사회과학대학", lat:35.9713667, lng:126.957126, illust:"humanities"},
+  {id:"53", name:"경상관", sub:"경상대학", lat:35.9709779, lng:126.9575982, illust:"humanities"},
+  {id:"26", name:"법학전문대학원", sub:"법학전문대학원", lat:35.9702972, lng:126.9563561, illust:"humanities"},
+  {id:"63", name:"자연과학관", sub:"자연과학대학", lat:35.9677005, lng:126.9592925, illust:"engineering"},
+  {id:"59", name:"공과대학", sub:"건축공학과 외", lat:35.9678672, lng:126.9581537, illust:"engineering"},
+  {id:"72", name:"사범대학", sub:"사범대학", lat:35.9673117, lng:126.9608757, illust:"humanities"},
+  {id:"86", name:"프라임관", sub:"컨퍼런스홀 외", lat:35.9684744, lng:126.9579818, illust:"office"},
+  {id:"69", name:"의과대학", sub:"의학과", lat:35.9657047, lng:126.9590814, illust:"medical"},
+  {id:"70", name:"한의학전문관", sub:"한의학전문대학원", lat:35.9652841, lng:126.9586815, illust:"medical"},
+  {id:"74", name:"치과대학", sub:"치의학과", lat:35.9650573, lng:126.9606074, illust:"medical"},
+  {id:"60", name:"박물관", sub:"대학 박물관·전시", lat:35.9662562, lng:126.9567373, illust:"museum"},
+  {id:"68", name:"약학관", sub:"약학대학", lat:35.9669229, lng:126.9595981, illust:"pharmacy"},
+  {id:"65", name:"문화체육관", sub:"대형 체육·행사시설", lat:35.9652510, lng:126.9573320, illust:"sports"},
+  {id:"5", name:"대운동장", sub:"육상트랙·축구장", lat:35.9703391, lng:126.9600979, illust:"stadium"},
+  {id:"30", name:"학생생활관-용화관", sub:"기숙사", lat:35.9722, lng:126.9569593, illust:"student"},
+  {id:"31", name:"학생생활관-개벽관", sub:"기숙사", lat:35.9728325, lng:126.9571492, illust:"student"},
+  {id:"33", name:"학생생활관-삼동관", sub:"학생 복지 시설", lat:35.9682695, lng:126.9585945, illust:"student"},
+  {id:"3", name:"남문", sub:"캠퍼스 출입구", lat:35.96443, lng:126.9577, illust:"gate"},
+  {id:"4", name:"동문", sub:"캠퍼스 출입구", lat:35.9714668, lng:126.9643265, illust:"gate"},
+];
+
+const ILLUSTRATIONS = {
+  office: `<svg viewBox="0 0 160 110"><rect x="30" y="20" width="100" height="80" rx="3" fill="#17284a"/><rect x="30" y="20" width="100" height="10" fill="#b8912f"/>${Array.from({length:4}).map((_,r)=>Array.from({length:5}).map((__,c)=>`<rect x="${42+c*17}" y="${40+r*15}" width="9" height="9" fill="#f6f4ef" opacity="0.85"/>`).join('')).join('')}<rect x="70" y="82" width="20" height="18" fill="#e8dcb8"/><polygon points="20,100 140,100 130,90 30,90" fill="#0f1c33"/></svg>`,
+  library: `<svg viewBox="0 0 160 110"><rect x="20" y="45" width="120" height="55" fill="#17284a"/><rect x="20" y="40" width="120" height="8" fill="#b8912f"/>${[28,50,72,94,116].map(x=>`<rect x="${x}" y="50" width="10" height="48" fill="#f6f4ef" opacity="0.9"/>`).join('')}<polygon points="10,45 150,45 130,22 30,22" fill="#0f1c33"/><rect x="70" y="80" width="20" height="20" fill="#e8dcb8"/></svg>`,
+  humanities: `<svg viewBox="0 0 160 110"><rect x="35" y="35" width="90" height="65" fill="#24365e"/><rect x="35" y="30" width="90" height="8" fill="#b8912f"/>${[45,65,85,105].map(x=>`<rect x="${x}" y="46" width="8" height="42" fill="#f6f4ef" opacity="0.85"/>`).join('')}<circle cx="80" cy="16" r="9" fill="#e8dcb8"/></svg>`,
+  engineering: `<svg viewBox="0 0 160 110"><rect x="25" y="30" width="110" height="70" fill="#17284a"/><rect x="25" y="26" width="110" height="7" fill="#b8912f"/>${Array.from({length:3}).map((_,r)=>Array.from({length:6}).map((__,c)=>`<rect x="${35+c*16}" y="${42+r*17}" width="10" height="10" fill="#f6f4ef" opacity="0.8"/>`).join('')).join('')}<circle cx="128" cy="20" r="10" fill="none" stroke="#e8dcb8" stroke-width="3"/></svg>`,
+  student: `<svg viewBox="0 0 160 110"><rect x="30" y="25" width="45" height="75" fill="#24365e"/><rect x="82" y="40" width="45" height="60" fill="#17284a"/>${[38,52,66].flatMap(x=>[30,45,60,75].map(y=>`<rect x="${x}" y="${y}" width="7" height="7" fill="#f6f4ef" opacity="0.85"/>`)).join('')}${[90,104,118].flatMap(x=>[50,65,80].map(y=>`<rect x="${x}" y="${y}" width="7" height="7" fill="#f6f4ef" opacity="0.85"/>`)).join('')}</svg>`,
+  museum: `<svg viewBox="0 0 160 110"><rect x="25" y="50" width="110" height="48" fill="#17284a"/><polygon points="15,50 145,50 80,15" fill="#0f1c33"/>${[38,60,82,104,120].map(x=>`<rect x="${x}" y="58" width="8" height="40" fill="#f6f4ef" opacity="0.9"/>`).join('')}<rect x="70" y="78" width="20" height="20" fill="#e8dcb8"/></svg>`,
+  pharmacy: `<svg viewBox="0 0 160 110"><rect x="30" y="28" width="100" height="72" fill="#24365e"/><rect x="30" y="24" width="100" height="8" fill="#b8912f"/>${Array.from({length:4}).map((_,r)=>Array.from({length:4}).map((__,c)=>`<rect x="${44+c*20}" y="${42+r*14}" width="12" height="9" fill="#f6f4ef" opacity="0.85"/>`).join('')).join('')}<rect x="72" y="46" width="16" height="4" fill="#e8dcb8"/><rect x="78" y="40" width="4" height="16" fill="#e8dcb8"/></svg>`,
+  hall: `<svg viewBox="0 0 160 110"><rect x="30" y="42" width="100" height="58" fill="#17284a"/><polygon points="20,42 140,42 80,12" fill="#0f1c33"/><rect x="70" y="76" width="20" height="24" fill="#e8dcb8"/>${[42,60,100,118].map(x=>`<rect x="${x}" y="55" width="10" height="18" fill="#f6f4ef" opacity="0.85"/>`).join('')}<circle cx="80" cy="27" r="6" fill="#b8912f"/></svg>`,
+  sports: `<svg viewBox="0 0 160 110"><rect x="25" y="30" width="110" height="65" fill="#24365e"/><rect x="25" y="26" width="110" height="7" fill="#b8912f"/><circle cx="80" cy="63" r="18" fill="none" stroke="#f6f4ef" stroke-width="3" opacity="0.85"/><path d="M62 63h36M80 45v36" stroke="#f6f4ef" stroke-width="2" opacity="0.6"/></svg>`,
+  medical: `<svg viewBox="0 0 160 110"><rect x="30" y="28" width="100" height="72" fill="#17284a"/><rect x="30" y="24" width="100" height="8" fill="#b8912f"/><rect x="72" y="44" width="16" height="40" fill="#e8dcb8"/><rect x="60" y="56" width="40" height="16" fill="#e8dcb8"/></svg>`,
+  stadium: `<svg viewBox="0 0 160 110"><ellipse cx="80" cy="60" rx="65" ry="35" fill="none" stroke="#17284a" stroke-width="10"/><ellipse cx="80" cy="60" rx="65" ry="35" fill="none" stroke="#b8912f" stroke-width="2"/><ellipse cx="80" cy="60" rx="38" ry="18" fill="#24365e" opacity="0.5"/></svg>`,
+  gate: `<svg viewBox="0 0 160 110"><rect x="30" y="20" width="14" height="70" fill="#17284a"/><rect x="116" y="20" width="14" height="70" fill="#17284a"/><rect x="24" y="14" width="112" height="14" fill="#b8912f"/><rect x="70" y="40" width="20" height="50" fill="#e8dcb8" opacity="0.6"/></svg>`
+};
+
+let userPos = null;
+let selectedBuilding = null;
+
+function toRad(d){ return d*Math.PI/180; }
+function toDeg(r){ return r*180/Math.PI; }
+
+function haversine(lat1,lon1,lat2,lon2){
+  const R = 6371000;
+  const dLat = toRad(lat2-lat1);
+  const dLon = toRad(lon2-lon1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.sqrt(a));
+}
+function bearing(lat1,lon1,lat2,lon2){
+  const y = Math.sin(toRad(lon2-lon1))*Math.cos(toRad(lat2));
+  const x = Math.cos(toRad(lat1))*Math.sin(toRad(lat2)) - Math.sin(toRad(lat1))*Math.cos(toRad(lat2))*Math.cos(toRad(lon2-lon1));
+  let brng = toDeg(Math.atan2(y,x));
+  return (brng+360)%360;
+}
+function compassLabel(deg){
+  const dirs = ["북","북동","동","남동","남","남서","서","북서"];
+  return dirs[Math.round(deg/45)%8];
+}
+
+let bldgQuery = "";
+
+function highlightMatch(text, q){
+  if(!q) return text;
+  const idx = text.indexOf(q);
+  if(idx === -1) return text;
+  return text.slice(0,idx) + `<span class="hl-match">${text.slice(idx, idx+q.length)}</span>` + text.slice(idx+q.length);
+}
+
+function renderBuildings(){
+  const list = document.getElementById('bldg-list');
+  const emptyNote = document.getElementById('bldg-empty');
+  const q = bldgQuery.trim();
+  const filtered = BUILDINGS.filter(b => !q || b.name.includes(q) || b.id.includes(q) || b.sub.includes(q));
+
+  if(filtered.length === 0){
+    list.innerHTML = '';
+    emptyNote.textContent = `'${q}'와 일치하는 건물이 없어요.`;
+    return;
+  }
+  emptyNote.textContent = "건물을 탭하면 방향과 거리를 볼 수 있어요. 실내 경로 안내는 추후 업데이트될 예정이에요.";
+
+  list.innerHTML = filtered.map(b=>{
+    let distTxt = "--";
+    if(userPos){
+      const d = haversine(userPos.lat,userPos.lng,b.lat,b.lng);
+      distTxt = d<1000 ? `${Math.round(d)}m` : `${(d/1000).toFixed(1)}km`;
+    }
+    return `
+      <div class="bldg-row ${selectedBuilding===b.id?'selected':''}" data-id="${b.id}">
+        <div class="bldg-badge" style="font-size:${b.id.length>2?'10px':'12.5px'}">${highlightMatch(b.id, q)}</div>
+        <div class="bldg-info">
+          <div class="name">${highlightMatch(b.name, q)}</div>
+          <div class="sub">${b.sub}</div>
+        </div>
+        <div class="bldg-dist">${distTxt}</div>
+      </div>`;
+  }).join('');
+  list.querySelectorAll('.bldg-row').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      selectedBuilding = el.dataset.id;
+      renderBuildings();
+      updateDetail();
+      renderMap();
+    });
+  });
+}
+
+document.getElementById('bldg-search-input').addEventListener('input', (e)=>{
+  bldgQuery = e.target.value;
+  renderBuildings();
+  renderMap();
+});
+
+function getSavedPhoto(id){
+  try{ return localStorage.getItem(`wku_photo_${id}`); }catch(e){ return null; }
+}
+
+function renderIllust(b){
+  const photo = getSavedPhoto(b.id);
+  const box = document.getElementById('bldg-illust');
+  const actions = document.getElementById('photo-actions');
+  if(photo){
+    box.innerHTML = `<img src="${photo}" alt="${b.name}">`;
+    actions.classList.add('has-photo');
+    document.querySelector('#photo-actions label').textContent = "📷 사진 변경";
+  } else {
+    box.innerHTML = ILLUSTRATIONS[b.illust] || '';
+    actions.classList.remove('has-photo');
+    document.querySelector('#photo-actions label').textContent = "📷 사진 추가";
+  }
+}
+
+function updateDetail(){
+  const detail = document.getElementById('detail');
+  if(selectedBuilding==null){ detail.classList.remove('show'); return; }
+  const b = BUILDINGS.find(x=>x.id===selectedBuilding);
+  document.getElementById('detail-name').textContent = b.name;
+  renderIllust(b);
+
+  const query = encodeURIComponent(`원광대학교 ${b.name}`);
+  document.getElementById('open-google').href = `https://www.google.com/maps/search/?api=1&query=${query}`;
+  document.getElementById('open-kakao').href = `https://map.kakao.com/link/search/${query}`;
+  document.getElementById('open-naver').href = `https://map.naver.com/p/search/${query}`;
+
+  if(!userPos){
+    document.getElementById('detail-dist').textContent = "위치 확인 필요";
+    document.getElementById('detail-dir').textContent = "먼저 내 위치를 찾아주세요";
+    detail.classList.add('show');
+    return;
+  }
+  const d = haversine(userPos.lat,userPos.lng,b.lat,b.lng);
+  const brng = bearing(userPos.lat,userPos.lng,b.lat,b.lng);
+  document.getElementById('detail-dist').textContent = d<1000 ? `${Math.round(d)}m` : `${(d/1000).toFixed(2)}km`;
+  document.getElementById('detail-dir').textContent = `${compassLabel(brng)}쪽 (${Math.round(brng)}°)`;
+  document.getElementById('arrow').style.transform = `translate(-50%,-100%) rotate(${brng}deg)`;
+  detail.classList.add('show');
+}
+
+document.getElementById('photo-input').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file || selectedBuilding==null) return;
+  const img = new Image();
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    img.onload = ()=>{
+      const maxW = 640;
+      const scale = Math.min(1, maxW/img.width);
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width*scale;
+      canvas.height = img.height*scale;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.72);
+      try{
+        localStorage.setItem(`wku_photo_${selectedBuilding}`, dataUrl);
+        renderIllust(BUILDINGS.find(x=>x.id===selectedBuilding));
+      }catch(err){
+        alert("사진 저장에 실패했어요. 용량이 너무 클 수 있어요.");
+      }
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+  e.target.value = "";
+});
+
+document.getElementById('photo-remove').addEventListener('click', ()=>{
+  if(selectedBuilding==null) return;
+  try{ localStorage.removeItem(`wku_photo_${selectedBuilding}`); }catch(e){}
+  renderIllust(BUILDINGS.find(x=>x.id===selectedBuilding));
+});
+
+/* ---------------- Mini-map (local projection, no external tiles) ---------------- */
+const MAP_W = 300, MAP_H = 220, PAD = 30;
+
+function projectPoints(){
+  // origin = centroid of buildings
+  const originLat = BUILDINGS.reduce((s,b)=>s+b.lat,0)/BUILDINGS.length;
+  const originLng = BUILDINGS.reduce((s,b)=>s+b.lng,0)/BUILDINGS.length;
+  const mPerDegLat = 110540;
+  const mPerDegLng = 111320*Math.cos(toRad(originLat));
+
+  const pts = BUILDINGS.map(b=>({
+    ...b,
+    x: (b.lng-originLng)*mPerDegLng,
+    y: -(b.lat-originLat)*mPerDegLat // invert so north(+lat) is up
+  }));
+  let userPt = null;
+  if(userPos){
+    userPt = {
+      x: (userPos.lng-originLng)*mPerDegLng,
+      y: -(userPos.lat-originLat)*mPerDegLat
+    };
+  }
+  return {pts, userPt};
+}
+
+function renderMap(){
+  const svg = document.getElementById('campus-svg');
+  const {pts, userPt} = projectPoints();
+
+  const allX = pts.map(p=>p.x).concat(userPt?[userPt.x]:[]);
+  const allY = pts.map(p=>p.y).concat(userPt?[userPt.y]:[]);
+  const minX = Math.min(...allX), maxX = Math.max(...allX);
+  const minY = Math.min(...allY), maxY = Math.max(...allY);
+  const spanX = Math.max(maxX-minX, 1);
+  const spanY = Math.max(maxY-minY, 1);
+  const scale = Math.min((MAP_W-2*PAD)/spanX, (MAP_H-2*PAD)/spanY);
+
+  const cx = (minX+maxX)/2, cy = (minY+maxY)/2;
+  const toSvg = (x,y)=>({
+    sx: MAP_W/2 + (x-cx)*scale,
+    sy: MAP_H/2 + (y-cy)*scale
+  });
+
+  const meterOptions = [10,20,50,100,200,500];
+  let chosen = meterOptions[0];
+  for(const m of meterOptions){ if(m*scale <= 70) chosen = m; }
+  document.getElementById('scale-label').textContent = `${chosen}m`;
+  document.querySelector('.scale-bar .line').style.width = `${chosen*scale}px`;
+
+  let svgParts = [];
+
+  /* ---- 배경(항공뷰 느낌): 잔디밭·산책로를 단순화한 형태로 표현 ---- */
+  svgParts.push(`<rect x="0" y="0" width="${MAP_W}" height="${MAP_H}" fill="var(--bg)"/>`);
+  svgParts.push(`<ellipse cx="${MAP_W*0.5}" cy="${MAP_H*0.46}" rx="${MAP_W*0.62}" ry="${MAP_H*0.58}" fill="var(--sage-tint)" opacity="0.55"/>`);
+  // 대략적인 순환 산책로 느낌의 곡선 (장식용, 실제 도로 데이터 아님)
+  svgParts.push(`<path d="M ${MAP_W*0.12} ${MAP_H*0.7} Q ${MAP_W*0.3} ${MAP_H*0.15} ${MAP_W*0.65} ${MAP_H*0.2} T ${MAP_W*0.92} ${MAP_H*0.55}" fill="none" stroke="var(--line)" stroke-width="3" opacity="0.6"/>`);
+  svgParts.push(`<path d="M ${MAP_W*0.08} ${MAP_H*0.4} Q ${MAP_W*0.4} ${MAP_H*0.75} ${MAP_W*0.85} ${MAP_H*0.8}" fill="none" stroke="var(--line)" stroke-width="2.5" opacity="0.5"/>`);
+
+  if(userPt && selectedBuilding!=null){
+    const b = pts.find(p=>p.id===selectedBuilding);
+    const a = toSvg(userPt.x, userPt.y);
+    const t = toSvg(b.x, b.y);
+    svgParts.push(`<line class="path-line" x1="${a.sx}" y1="${a.sy}" x2="${t.sx}" y2="${t.sy}"/>`);
+  }
+
+  pts.forEach(p=>{
+    const s = toSvg(p.x,p.y);
+    const sel = p.id===selectedBuilding;
+    const matched = bldgQuery.trim() && (p.name.includes(bldgQuery.trim()) || p.id.includes(bldgQuery.trim()));
+    const fs = p.id.length>2 ? 6.5 : 8;
+
+    // 대운동장은 트랙 모양으로 별도 표시 (실제 좌표 기준)
+    if(p.id === "5"){
+      svgParts.push(`
+        <ellipse cx="${s.sx}" cy="${s.sy}" rx="22" ry="12" fill="none" stroke="var(--ink)" stroke-width="2.5" opacity="0.5"/>
+        <ellipse cx="${s.sx}" cy="${s.sy}" rx="13" ry="6.5" fill="var(--sage-tint)" opacity="0.9"/>`);
+    }
+
+    const bw = p.id.length>2 ? 20 : 16, bh = 13;
+    svgParts.push(`
+      <g class="map-node ${sel?'selected':''} ${matched?'matched':''}" data-id="${p.id}" style="cursor:pointer">
+        ${matched ? `<rect x="${s.sx-bw/2-4}" y="${s.sy-bh/2-4}" width="${bw+8}" height="${bh+8}" rx="4" fill="none" stroke="var(--gold)" stroke-width="1.5" opacity="0.85"/>` : ''}
+        <rect class="badge-bg" x="${s.sx-bw/2}" y="${s.sy-bh/2}" width="${bw}" height="${bh}" rx="2.5"/>
+        <rect class="badge-roof" x="${s.sx-bw/2}" y="${s.sy-bh/2}" width="${bw}" height="3.5" rx="1"/>
+        <text class="badge-num" style="font-size:${fs}px" x="${s.sx}" y="${s.sy+4}">${p.id}</text>
+        <text x="${s.sx}" y="${s.sy+bh/2+13}" text-anchor="middle">${p.name}</text>
+      </g>`);
+  });
+
+  if(userPt){
+    const u = toSvg(userPt.x, userPt.y);
+    svgParts.push(`<circle class="user-pulse" cx="${u.sx}" cy="${u.sy}" r="5"/>`);
+    svgParts.push(`<circle class="user-dot" cx="${u.sx}" cy="${u.sy}" r="6"/>`);
+  }
+
+  svg.innerHTML = `<g id="map-g">${svgParts.join('')}</g>`;
+  applyMapTransform();
+
+  svg.querySelectorAll('.map-node').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      selectedBuilding = el.dataset.id;
+      renderBuildings();
+      updateDetail();
+      renderMap();
+    });
+  });
+}
+
+/* ---------------- Pan & zoom ---------------- */
+let mapPanX = 0, mapPanY = 0, mapZoom = 1;
+let mapDragging = false, mapLastX = 0, mapLastY = 0;
+
+function applyMapTransform(){
+  const g = document.getElementById('map-g');
+  if(!g) return;
+  g.setAttribute('transform',
+    `translate(${MAP_W/2+mapPanX},${MAP_H/2+mapPanY}) scale(${mapZoom}) translate(${-MAP_W/2},${-MAP_H/2})`);
+}
+
+(function setupMapPanZoom(){
+  const svg = document.getElementById('campus-svg');
+  const activePointers = new Map();
+  let pinchStartDist = 0, pinchStartZoom = 1;
+
+  svg.addEventListener('pointerdown', (e)=>{
+    svg.setPointerCapture(e.pointerId);
+    activePointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+
+    if(activePointers.size === 1){
+      mapDragging = true;
+      mapLastX = e.clientX; mapLastY = e.clientY;
+    } else if(activePointers.size === 2){
+      mapDragging = false;
+      const pts = [...activePointers.values()];
+      pinchStartDist = Math.hypot(pts[0].x-pts[1].x, pts[0].y-pts[1].y) || 1;
+      pinchStartZoom = mapZoom;
+    }
+  });
+
+  svg.addEventListener('pointermove', (e)=>{
+    if(!activePointers.has(e.pointerId)) return;
+    activePointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+
+    if(activePointers.size >= 2){
+      const pts = [...activePointers.values()];
+      const dist = Math.hypot(pts[0].x-pts[1].x, pts[0].y-pts[1].y);
+      mapZoom = Math.min(4, Math.max(0.6, pinchStartZoom * (dist/pinchStartDist)));
+      applyMapTransform();
+      return;
+    }
+
+    if(!mapDragging) return;
+    const rect = svg.getBoundingClientRect();
+    const unitsPerPx = MAP_W / rect.width;
+    const dx = (e.clientX - mapLastX) * unitsPerPx / mapZoom;
+    const dy = (e.clientY - mapLastY) * unitsPerPx / mapZoom;
+    mapPanX += dx; mapPanY += dy;
+    mapLastX = e.clientX; mapLastY = e.clientY;
+    applyMapTransform();
+  });
+
+  ['pointerup','pointerleave','pointercancel'].forEach(evt=>{
+    svg.addEventListener(evt, (e)=>{
+      activePointers.delete(e.pointerId);
+      if(activePointers.size === 0){
+        mapDragging = false;
+      } else if(activePointers.size === 1){
+        const remaining = [...activePointers.values()][0];
+        mapDragging = true;
+        mapLastX = remaining.x; mapLastY = remaining.y;
+      }
+    });
+  });
+
+  document.getElementById('zoom-in').addEventListener('click', ()=>{
+    mapZoom = Math.min(4, mapZoom * 1.35);
+    applyMapTransform();
+  });
+  document.getElementById('zoom-out').addEventListener('click', ()=>{
+    mapZoom = Math.max(0.6, mapZoom / 1.35);
+    applyMapTransform();
+  });
+  document.getElementById('zoom-reset').addEventListener('click', ()=>{
+    mapZoom = 1; mapPanX = 0; mapPanY = 0;
+    applyMapTransform();
+  });
+})();
+
+document.getElementById('locate-btn').addEventListener('click', ()=>{
+  const dot = document.getElementById('gps-dot');
+  const txt = document.getElementById('gps-text');
+  if(!navigator.geolocation){
+    txt.textContent = "이 브라우저는 위치 확인을 지원하지 않아요";
+    return;
+  }
+  txt.textContent = "위치 확인 중...";
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      userPos = {lat:pos.coords.latitude, lng:pos.coords.longitude};
+      dot.classList.add('live');
+      txt.textContent = `위치 확인됨 (정확도 약 ${Math.round(pos.coords.accuracy)}m)`;
+      renderBuildings();
+      updateDetail();
+      renderMap();
+    },
+    err=>{
+      dot.classList.remove('live');
+      txt.textContent = "위치 권한이 필요해요. 브라우저 설정에서 허용해주세요.";
+    },
+    {enableHighAccuracy:true, timeout:10000}
+  );
+});
+
+/* ---------------- Tabs ---------------- */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const v = btn.dataset.view;
+    document.querySelectorAll('.view').forEach(sec=>sec.classList.remove('active'));
+    document.getElementById(v==='notice' ? 'view-notice' : 'view-nav').classList.add('active');
+    document.querySelector('main').scrollTop = 0;
+    document.querySelector('nav.tabbar').classList.remove('hidden');
+  });
+});
+
+/* ---------------- Tabbar auto-hide on scroll ---------------- */
+(function(){
+  const mainEl = document.querySelector('main');
+  const tabbar = document.querySelector('nav.tabbar');
+  let lastTop = 0;
+  let stopTimer = null;
+
+  mainEl.addEventListener('scroll', ()=>{
+    const top = mainEl.scrollTop;
+    if(top > lastTop && top > 30){
+      tabbar.classList.add('hidden');   // 아래로 스크롤 → 숨김
+    } else {
+      tabbar.classList.remove('hidden'); // 위로 스크롤 → 다시 표시
+    }
+    lastTop = top <= 0 ? 0 : top;
+
+    clearTimeout(stopTimer);
+    stopTimer = setTimeout(()=> tabbar.classList.remove('hidden'), 250); // 멈추면 다시 표시
+  }, {passive:true});
+})();
+
+/* ---------------- Init ---------------- */
+document.getElementById('notice-modal').addEventListener('click', (e)=>{
+  if(e.target.id === 'notice-modal') closeNoticeModal();
+});
+renderChips();
+loadNotices();
+renderBuildings();
+renderMap();
+</script>
+</body>
+</html>
