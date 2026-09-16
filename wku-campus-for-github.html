@@ -657,7 +657,7 @@ async function loadNotices(){
   list.innerHTML = `<div class="empty-note">공지사항을 불러오는 중...</div>`;
   try{
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/notices?select=*&order=created_at.desc&limit=100`,
+      `${SUPABASE_URL}/rest/v1/notices?select=*&order=posted_date.desc&limit=100`,
       { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
     );
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
