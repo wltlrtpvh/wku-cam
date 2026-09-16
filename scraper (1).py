@@ -30,8 +30,8 @@ import re
 import requests
 from bs4 import BeautifulSoup
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
+SUPABASE_URL = os.environ.get("https://aopfvqjllmzulxbtalmo.supabase.co/rest/v1/", "")
+SUPABASE_KEY = os.environ.get("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvcGZ2cWpsbG16dWx4YnRhbG1vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1NDIwMzMsImV4cCI6MjEwNTExODAzM30.iKC5CfqUM3qy6uJbZSGbOwQyrM9bkLWosScKdieDUkM", "")
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; WKUCampusBot/1.0)"}
 
