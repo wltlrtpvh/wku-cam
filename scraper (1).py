@@ -52,23 +52,37 @@ def fetch_list(category, url):
     res.raise_for_status()
     soup = BeautifulSoup(res.text, "html.parser")
 
-    # 페이지 전체에서 h3 태그를 찾는다 (사이트에 <main> 태그가 없을 수도 있어서
-    # 범위를 좁히지 않고 전체 페이지에서 찾음)
-    all_h3 = soup.find_all("h3")
-    print(f"[{category}] 페이지에서 발견한 h3 태그 수: {len(all_h3)}개")
+    # 이 사이트의 정확한 구조를 몰라서, 여러 후보 선택자를 순서대로 시도합니다.
+    # 로그에 각 후보가 몇 개를 찾았는지 남겨서 원인을 파악할 수 있게 합니다.
+    candidates = [
+        ("h3 a", soup.select("h3 a")),
+        ("h2 a", soup.select("h2 a")),
+        (".elementor-post__title a", soup.select(".elementor-post__title a")),
+        (".entry-title a", soup.select(".entry-title a")),
+        ("article a", soup.select("article a")),
+        ("table a", soup.select("table a")),
+    ]
+    for name, found in candidates:
+        print(f"[{category}] 선택자 '{name}' → {len(found)}개 발견")
+
+    links = []
+    used = None
+    for name, found in candidates:
+        if len(found) >= 3:
+            links = found
+            used = name
+            break
+    print(f"[{category}] 사용한 선택자: {used or '없음 (전부 실패)'}")
 
     items = []
-    for h3 in all_h3:
-        a = h3.find("a")
-        if not a or not a.get("href"):
-            continue
+    for a in links:
         title = a.get_text(strip=True)
-        link = a["href"]
+        link = a.get("href", "")
         if not title or not link.startswith("http"):
             continue
 
         date_match = None
-        parent = h3.find_parent()
+        parent = a.find_parent(["li", "article", "tr", "div"])
         if parent:
             text_near = parent.get_text(" ", strip=True)
             m = re.search(r"(20\d{2}[./]\d{2}[./]\d{2})", text_near)
@@ -82,10 +96,20 @@ def fetch_list(category, url):
             "posted_date": date_match or "",
         })
 
-    print(f"[{category}] 최종 추출된 글 수: {len(items)}개")
-    if items:
-        print(f"[{category}] 첫 번째 글 예시: {items[0]['title']}")
-    return items
+    seen = set()
+    unique_items = []
+    for it in items:
+        if it["url"] not in seen:
+            seen.add(it["url"])
+            unique_items.append(it)
+
+    print(f"[{category}] 최종 추출된 글 수: {len(unique_items)}개")
+    if unique_items:
+        print(f"[{category}] 첫 번째 글 예시: {unique_items[0]['title']}")
+    else:
+        # 아무것도 못 찾았으면, 페이지 앞부분을 조금 출력해서 실제 구조를 확인할 수 있게 함
+        print(f"[{category}] 디버그용 HTML 앞부분 500자:\n{res.text[:500]}")
+    return unique_items
 
 
 def fetch_body(url):
