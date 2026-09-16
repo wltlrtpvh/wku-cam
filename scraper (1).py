@@ -1,37 +1,10 @@
-"""
-원광대학교 공지사항 자동 수집 스크립트
-------------------------------------
-학교 홈페이지의 공지 게시판을 확인해서 새 글이 있으면 Supabase에 저장합니다.
-GitHub Actions로 이 스크립트를 주기적으로(예: 1시간마다) 실행하면
-서버 없이도 "자동 수집"이 완성됩니다.
-
-사용 전 준비물:
-  1. Supabase 프로젝트 (무료) 생성 → https://supabase.com
-  2. notices 테이블 생성 (아래 SQL 참고)
-  3. 환경변수 SUPABASE_URL, SUPABASE_KEY 설정 (GitHub Actions Secrets에 등록)
-
---- notices 테이블 생성 SQL (Supabase SQL Editor에서 실행) ---
-create table notices (
-  id bigint generated always as identity primary key,
-  category text not null,
-  title text not null,
-  url text unique not null,
-  posted_date text,
-  body text,
-  created_at timestamp with time zone default now()
-);
-alter table notices enable row level security;
-create policy "public read" on notices for select using (true);
-----------------------------------------------------------
-"""
-
 import os
 import re
 import requests
 from bs4 import BeautifulSoup
 
-SUPABASE_URL = os.environ.get("https://aopfvqjllmzulxbtalmo.supabase.co/rest/v1/", "")
-SUPABASE_KEY = os.environ.get("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvcGZ2cWpsbG16dWx4YnRhbG1vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1NDIwMzMsImV4cCI6MjEwNTExODAzM30.iKC5CfqUM3qy6uJbZSGbOwQyrM9bkLWosScKdieDUkM", "")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; WKUCampusBot/1.0)"}
 
