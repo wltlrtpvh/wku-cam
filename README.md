@@ -1,7 +1,3 @@
-.github/workflows/scrape.yml
-# 이 파일을 GitHub 저장소의 .github/workflows/scrape.yml 경로에 넣으세요.
-# (지금은 파일명 충돌을 피하려고 앞에 점 대신 대시로 저장해뒀어요. 업로드할 때 경로를 맞춰주세요.)
-
 name: 원광대 공지 수집
 
 on:
