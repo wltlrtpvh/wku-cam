@@ -129,20 +129,78 @@
     color:var(--gold);
     letter-spacing:0.08em;
   }
-  header.top .ring{
-    position:relative;
+  header.top .menu-btn{
     width:32px; height:32px;
     border:1px solid var(--gold);
     border-radius:50%;
     flex:none;
-  }
-  header.top .ring::after{
-    content:"WKU";
-    position:absolute; inset:0;
-    display:flex; align-items:center; justify-content:center;
-    font-family:'Gowun Batang', serif;
-    font-size:8px; letter-spacing:0.04em;
+    background:transparent;
     color:var(--gold);
+    font-size:14px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  /* ---- Side menu (settings / feedback) ---- */
+  .side-menu-backdrop{
+    position:absolute; inset:0;
+    background:rgba(0,0,0,0.42);
+    z-index:60;
+    opacity:0; pointer-events:none;
+    transition:opacity 0.28s ease;
+  }
+  .side-menu-backdrop.open{ opacity:1; pointer-events:auto; }
+  .side-menu-backdrop[hidden]{ display:none; }
+  .side-menu[hidden]{ display:none; }
+  .side-menu{
+    position:absolute; top:0; right:0; bottom:0;
+    width:38%; min-width:220px; max-width:300px;
+    background:var(--surface);
+    z-index:61;
+    display:flex; flex-direction:column;
+    transform:translateX(100%);
+    transition:transform 0.28s ease;
+    box-shadow:-10px 0 28px rgba(0,0,0,0.2);
+  }
+  .side-menu.open{ transform:translateX(0); }
+  .side-menu-header{
+    flex:none;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 16px;
+    border-bottom:1px solid var(--line);
+  }
+  .side-menu-header h2{
+    font-family:'Gowun Batang', serif; font-size:16px; font-weight:700; margin:0;
+  }
+  .side-menu-close{
+    width:26px; height:26px; border-radius:50%;
+    border:1px solid var(--line); background:transparent;
+    color:var(--ink-soft); font-size:11px; cursor:pointer;
+  }
+  .side-menu-body{ flex:1; overflow-y:auto; padding:18px 16px; }
+  .side-menu-section{ margin-bottom:28px; }
+  .side-menu-section h3{
+    font-size:12px; font-weight:600; color:var(--ink-soft); margin:0 0 10px;
+  }
+  .side-menu-action{
+    display:block; width:100%; text-align:left;
+    padding:11px 12px; margin-bottom:8px;
+    border-radius:var(--radius-sm);
+    border:1px solid var(--line); background:var(--bg); color:var(--ink);
+    font-size:12.5px; font-family:'Noto Sans KR', sans-serif; cursor:pointer;
+  }
+  .side-menu-feedback-text{
+    width:100%; min-height:100px; box-sizing:border-box;
+    padding:10px 12px; margin-bottom:10px;
+    border-radius:var(--radius-sm);
+    border:1px solid var(--line); background:var(--bg); color:var(--ink);
+    font-size:12.5px; font-family:'Noto Sans KR', sans-serif; resize:vertical;
+  }
+  .side-menu-send-btn{
+    width:100%; padding:11px; border-radius:var(--radius-sm);
+    border:none; background:var(--ink); color:var(--bg);
+    font-size:12.5px; font-weight:600; cursor:pointer;
+    font-family:'Noto Sans KR', sans-serif;
   }
 
   main{
@@ -759,8 +817,28 @@
 
   <header class="top">
     <h1>원광<span class="hanja">圓光</span></h1>
-    <div class="ring"></div>
+    <button class="menu-btn" id="menu-btn" aria-label="메뉴 열기">☰</button>
   </header>
+
+  <div class="side-menu-backdrop" id="side-menu-backdrop" hidden></div>
+  <aside class="side-menu" id="side-menu" hidden aria-label="메뉴">
+    <div class="side-menu-header">
+      <h2>메뉴</h2>
+      <button class="side-menu-close" id="side-menu-close" aria-label="닫기">✕</button>
+    </div>
+    <div class="side-menu-body">
+      <section class="side-menu-section">
+        <h3>설정</h3>
+        <button class="side-menu-action" id="clear-recent-btn">최근 검색 기록 삭제</button>
+        <button class="side-menu-action" id="clear-photos-btn">저장된 건물 사진 전체 삭제</button>
+      </section>
+      <section class="side-menu-section">
+        <h3>피드백 보내기</h3>
+        <textarea class="side-menu-feedback-text" id="feedback-text" placeholder="불편한 점이나 추가했으면 하는 기능을 자유롭게 적어주세요."></textarea>
+        <button class="side-menu-send-btn" id="feedback-send-btn">보내기</button>
+      </section>
+    </div>
+  </aside>
 
   <nav class="tabbar">
     <button class="tab-btn active" data-view="home" aria-label="홈"><span class="ic" aria-hidden="true">🏠</span>홈</button>
@@ -1689,6 +1767,55 @@ function switchView(v){
 
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=> switchView(btn.dataset.view));
+});
+
+/* ---------------- Side menu (settings / feedback) ---------------- */
+const sideMenu = document.getElementById('side-menu');
+const sideMenuBackdrop = document.getElementById('side-menu-backdrop');
+
+function openSideMenu(){
+  sideMenu.hidden = false;
+  sideMenuBackdrop.hidden = false;
+  requestAnimationFrame(()=>{
+    sideMenu.classList.add('open');
+    sideMenuBackdrop.classList.add('open');
+  });
+}
+function closeSideMenu(){
+  sideMenu.classList.remove('open');
+  sideMenuBackdrop.classList.remove('open');
+  setTimeout(()=>{
+    sideMenu.hidden = true;
+    sideMenuBackdrop.hidden = true;
+  }, 280);
+}
+document.getElementById('menu-btn').addEventListener('click', openSideMenu);
+document.getElementById('side-menu-close').addEventListener('click', closeSideMenu);
+sideMenuBackdrop.addEventListener('click', closeSideMenu);
+
+document.getElementById('clear-recent-btn').addEventListener('click', ()=>{
+  if(!confirm('최근 검색 기록을 모두 삭제할까요?')) return;
+  try{ localStorage.removeItem('wku_recent_searches'); }catch(e){}
+  renderRecentSearches();
+  alert('최근 검색 기록을 삭제했어요.');
+});
+
+document.getElementById('clear-photos-btn').addEventListener('click', ()=>{
+  if(!confirm('저장된 건물 사진을 모두 삭제할까요? 되돌릴 수 없어요.')) return;
+  try{
+    Object.keys(localStorage).filter(k=>k.startsWith('wku_photo_')).forEach(k=>localStorage.removeItem(k));
+  }catch(e){}
+  if(selectedBuilding != null){ renderIllust(BUILDINGS.find(x=>x.id===selectedBuilding)); }
+  alert('저장된 사진을 모두 삭제했어요.');
+});
+
+document.getElementById('feedback-send-btn').addEventListener('click', ()=>{
+  const textEl = document.getElementById('feedback-text');
+  const text = textEl.value.trim();
+  if(!text){ alert('내용을 입력해주세요.'); return; }
+  const subject = encodeURIComponent('[원광 캠퍼스 도우미] 피드백');
+  const body = encodeURIComponent(text);
+  window.location.href = `mailto:dbghrb21234@gmail.com?subject=${subject}&body=${body}`;
 });
 
 document.querySelectorAll('.home-quick-btn[data-goto]').forEach(btn=>{
