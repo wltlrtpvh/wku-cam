@@ -202,6 +202,52 @@
     font-size:12.5px; font-weight:600; cursor:pointer;
     font-family:'Noto Sans KR', sans-serif;
   }
+  .side-menu-hint{
+    font-size:11px; color:var(--ink-soft); margin:8px 0 0; text-align:center;
+  }
+
+  /* ---- Custom confirm dialog (replaces native confirm()) ---- */
+  .confirm-dialog-backdrop{
+    position:absolute; inset:0; background:rgba(0,0,0,0.42);
+    z-index:70; display:flex; align-items:center; justify-content:center;
+  }
+  .confirm-dialog-backdrop[hidden]{ display:none; }
+  .confirm-dialog{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:78%; max-width:280px;
+    background:var(--surface); border-radius:var(--radius-md);
+    padding:20px 18px 16px;
+    z-index:71;
+    box-shadow:0 12px 32px rgba(0,0,0,0.24);
+  }
+  .confirm-dialog[hidden]{ display:none; }
+  .confirm-dialog-text{
+    font-size:13.5px; color:var(--ink); line-height:1.6; margin:0 0 18px; text-align:center;
+  }
+  .confirm-dialog-actions{ display:flex; gap:8px; }
+  .confirm-dialog-btn{
+    flex:1; padding:10px; border-radius:var(--radius-sm);
+    font-size:13px; font-weight:600; cursor:pointer;
+    font-family:'Noto Sans KR', sans-serif;
+    border:1px solid var(--line);
+  }
+  .confirm-dialog-btn.cancel{ background:var(--bg); color:var(--ink); }
+  .confirm-dialog-btn.danger{ background:#b8433a; border-color:#b8433a; color:#fff; }
+
+  /* ---- Toast (replaces native alert()) ---- */
+  .toast{
+    position:absolute; left:50%; bottom:26px;
+    transform:translate(-50%, 10px);
+    background:var(--ink); color:var(--bg);
+    padding:10px 18px; border-radius:var(--radius-pill);
+    font-size:12.5px; z-index:80;
+    opacity:0; pointer-events:none;
+    transition:opacity 0.25s ease, transform 0.25s ease;
+    white-space:nowrap; max-width:80%;
+    overflow:hidden; text-overflow:ellipsis;
+  }
+  .toast[hidden]{ display:none; }
+  .toast.show{ opacity:1; transform:translate(-50%,0); }
 
   main{
     flex:1;
@@ -821,12 +867,16 @@
   </header>
 
   <div class="side-menu-backdrop" id="side-menu-backdrop" hidden></div>
-  <aside class="side-menu" id="side-menu" hidden aria-label="메뉴">
+  <aside class="side-menu" id="side-menu" hidden aria-label="메뉴" role="dialog" aria-modal="true">
     <div class="side-menu-header">
       <h2>메뉴</h2>
       <button class="side-menu-close" id="side-menu-close" aria-label="닫기">✕</button>
     </div>
     <div class="side-menu-body">
+      <section class="side-menu-section">
+        <h3>더보기</h3>
+        <button class="side-menu-action" id="menu-meditation-btn">🌙 명상냅</button>
+      </section>
       <section class="side-menu-section">
         <h3>설정</h3>
         <button class="side-menu-action" id="clear-recent-btn">최근 검색 기록 삭제</button>
@@ -836,9 +886,21 @@
         <h3>피드백 보내기</h3>
         <textarea class="side-menu-feedback-text" id="feedback-text" placeholder="불편한 점이나 추가했으면 하는 기능을 자유롭게 적어주세요."></textarea>
         <button class="side-menu-send-btn" id="feedback-send-btn">보내기</button>
+        <p class="side-menu-hint">보내기를 누르면 메일 앱이 열려요.</p>
       </section>
     </div>
   </aside>
+
+  <div class="confirm-dialog-backdrop" id="confirm-dialog-backdrop" hidden></div>
+  <div class="confirm-dialog" id="confirm-dialog" hidden role="alertdialog" aria-modal="true">
+    <p class="confirm-dialog-text" id="confirm-dialog-text"></p>
+    <div class="confirm-dialog-actions">
+      <button class="confirm-dialog-btn cancel" id="confirm-dialog-cancel">취소</button>
+      <button class="confirm-dialog-btn danger" id="confirm-dialog-ok">삭제</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
 
   <nav class="tabbar">
     <button class="tab-btn active" data-view="home" aria-label="홈"><span class="ic" aria-hidden="true">🏠</span>홈</button>
@@ -871,7 +933,6 @@
         <button class="home-quick-btn" data-goto="map"><span aria-hidden="true">🗺️</span>캠퍼스 지도</button>
         <button class="home-quick-btn" id="home-locate-btn"><span aria-hidden="true">📍</span>내 위치</button>
         <button class="home-quick-btn" data-goto="notice"><span aria-hidden="true">📢</span>공지사항</button>
-        <button class="home-quick-btn" data-goto="meditation"><span aria-hidden="true">🌙</span>명상냅</button>
         <button class="home-quick-btn" data-goto="directions"><span aria-hidden="true">🚶</span>건물 간 경로</button>
       </div>
       <p class="home-locate-status" id="home-locate-status"></p>
@@ -1769,53 +1830,101 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=> switchView(btn.dataset.view));
 });
 
-/* ---------------- Side menu (settings / feedback) ---------------- */
+/* ---------------- Toast (lightweight, non-blocking status message) ---------------- */
+let toastTimer = null;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  clearTimeout(toastTimer);
+  t.textContent = msg;
+  t.hidden = false;
+  requestAnimationFrame(()=> t.classList.add('show'));
+  toastTimer = setTimeout(()=>{
+    t.classList.remove('show');
+    setTimeout(()=>{ t.hidden = true; }, 250);
+  }, 2200);
+}
+
+/* ---------------- Custom confirm dialog (replaces native confirm()) ---------------- */
+let confirmDialogResolve = null;
+function showConfirmDialog(text){
+  const backdrop = document.getElementById('confirm-dialog-backdrop');
+  const dialog = document.getElementById('confirm-dialog');
+  document.getElementById('confirm-dialog-text').textContent = text;
+  backdrop.hidden = false;
+  dialog.hidden = false;
+  return new Promise(resolve=>{ confirmDialogResolve = resolve; });
+}
+function hideConfirmDialog(result){
+  document.getElementById('confirm-dialog-backdrop').hidden = true;
+  document.getElementById('confirm-dialog').hidden = true;
+  if(confirmDialogResolve){ confirmDialogResolve(result); confirmDialogResolve = null; }
+}
+document.getElementById('confirm-dialog-cancel').addEventListener('click', ()=> hideConfirmDialog(false));
+document.getElementById('confirm-dialog-ok').addEventListener('click', ()=> hideConfirmDialog(true));
+document.getElementById('confirm-dialog-backdrop').addEventListener('click', ()=> hideConfirmDialog(false));
+
+/* ---------------- Side menu (더보기 / 설정 / 피드백) ---------------- */
 const sideMenu = document.getElementById('side-menu');
 const sideMenuBackdrop = document.getElementById('side-menu-backdrop');
 
 function openSideMenu(){
   sideMenu.hidden = false;
   sideMenuBackdrop.hidden = false;
+  document.querySelector('main').style.overflow = 'hidden';
   requestAnimationFrame(()=>{
     sideMenu.classList.add('open');
     sideMenuBackdrop.classList.add('open');
   });
+  document.getElementById('side-menu-close').focus();
 }
 function closeSideMenu(){
   sideMenu.classList.remove('open');
   sideMenuBackdrop.classList.remove('open');
+  document.querySelector('main').style.overflow = '';
   setTimeout(()=>{
     sideMenu.hidden = true;
     sideMenuBackdrop.hidden = true;
   }, 280);
+  document.getElementById('menu-btn').focus();
 }
 document.getElementById('menu-btn').addEventListener('click', openSideMenu);
 document.getElementById('side-menu-close').addEventListener('click', closeSideMenu);
 sideMenuBackdrop.addEventListener('click', closeSideMenu);
-
-document.getElementById('clear-recent-btn').addEventListener('click', ()=>{
-  if(!confirm('최근 검색 기록을 모두 삭제할까요?')) return;
-  try{ localStorage.removeItem('wku_recent_searches'); }catch(e){}
-  renderRecentSearches();
-  alert('최근 검색 기록을 삭제했어요.');
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape' && !sideMenu.hidden) closeSideMenu();
 });
 
-document.getElementById('clear-photos-btn').addEventListener('click', ()=>{
-  if(!confirm('저장된 건물 사진을 모두 삭제할까요? 되돌릴 수 없어요.')) return;
+document.getElementById('menu-meditation-btn').addEventListener('click', ()=>{
+  closeSideMenu();
+  switchView('meditation');
+});
+
+document.getElementById('clear-recent-btn').addEventListener('click', async ()=>{
+  const ok = await showConfirmDialog('최근 검색 기록을 모두 삭제할까요?');
+  if(!ok) return;
+  try{ localStorage.removeItem('wku_recent_searches'); }catch(e){}
+  renderRecentSearches();
+  showToast('최근 검색 기록을 삭제했어요.');
+});
+
+document.getElementById('clear-photos-btn').addEventListener('click', async ()=>{
+  const ok = await showConfirmDialog('저장된 건물 사진을 모두 삭제할까요? 되돌릴 수 없어요.');
+  if(!ok) return;
   try{
     Object.keys(localStorage).filter(k=>k.startsWith('wku_photo_')).forEach(k=>localStorage.removeItem(k));
   }catch(e){}
   if(selectedBuilding != null){ renderIllust(BUILDINGS.find(x=>x.id===selectedBuilding)); }
-  alert('저장된 사진을 모두 삭제했어요.');
+  showToast('저장된 사진을 모두 삭제했어요.');
 });
 
 document.getElementById('feedback-send-btn').addEventListener('click', ()=>{
   const textEl = document.getElementById('feedback-text');
   const text = textEl.value.trim();
-  if(!text){ alert('내용을 입력해주세요.'); return; }
+  if(!text){ showToast('내용을 입력해주세요.'); return; }
   const subject = encodeURIComponent('[원광 캠퍼스 도우미] 피드백');
   const body = encodeURIComponent(text);
   window.location.href = `mailto:dbghrb21234@gmail.com?subject=${subject}&body=${body}`;
+  showToast('메일 앱을 열었어요.');
 });
 
 document.querySelectorAll('.home-quick-btn[data-goto]').forEach(btn=>{
