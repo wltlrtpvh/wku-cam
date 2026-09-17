@@ -189,12 +189,32 @@
     border:1px solid var(--line); background:var(--bg); color:var(--ink);
     font-size:12.5px; font-family:'Noto Sans KR', sans-serif; cursor:pointer;
   }
+  .feedback-type-row{
+    display:grid; grid-template-columns:repeat(2,1fr); gap:6px;
+    margin-bottom:10px;
+  }
+  .feedback-type-btn{
+    padding:8px 6px; border-radius:var(--radius-sm);
+    border:1px solid var(--line); background:var(--bg); color:var(--ink-soft);
+    font-size:11.5px; font-weight:600; cursor:pointer;
+    font-family:'Noto Sans KR', sans-serif;
+  }
+  .feedback-type-btn.active{
+    background:var(--ink); border-color:var(--ink); color:var(--bg);
+  }
   .side-menu-feedback-text{
     width:100%; min-height:100px; box-sizing:border-box;
-    padding:10px 12px; margin-bottom:10px;
+    padding:10px 12px; margin-bottom:8px;
     border-radius:var(--radius-sm);
     border:1px solid var(--line); background:var(--bg); color:var(--ink);
     font-size:12.5px; font-family:'Noto Sans KR', sans-serif; resize:vertical;
+  }
+  .side-menu-feedback-email{
+    width:100%; box-sizing:border-box;
+    padding:10px 12px; margin-bottom:10px;
+    border-radius:var(--radius-sm);
+    border:1px solid var(--line); background:var(--bg); color:var(--ink);
+    font-size:12.5px; font-family:'Noto Sans KR', sans-serif;
   }
   .side-menu-send-btn{
     width:100%; padding:11px; border-radius:var(--radius-sm);
@@ -884,9 +904,16 @@
       </section>
       <section class="side-menu-section">
         <h3>피드백 보내기</h3>
+        <div class="feedback-type-row" id="feedback-type-row">
+          <button type="button" class="feedback-type-btn active" data-type="버그 신고">버그 신고</button>
+          <button type="button" class="feedback-type-btn" data-type="기능 제안">기능 제안</button>
+          <button type="button" class="feedback-type-btn" data-type="개선 의견">개선 의견</button>
+          <button type="button" class="feedback-type-btn" data-type="기타">기타</button>
+        </div>
         <textarea class="side-menu-feedback-text" id="feedback-text" placeholder="불편한 점이나 추가했으면 하는 기능을 자유롭게 적어주세요."></textarea>
+        <input type="email" class="side-menu-feedback-email" id="feedback-email" placeholder="답장받을 이메일 (선택)">
         <button class="side-menu-send-btn" id="feedback-send-btn">보내기</button>
-        <p class="side-menu-hint">보내기를 누르면 메일 앱이 열려요.</p>
+        <p class="side-menu-hint">위치 정보 등 다른 개인정보는 포함되지 않아요.</p>
       </section>
     </div>
   </aside>
@@ -1917,14 +1944,45 @@ document.getElementById('clear-photos-btn').addEventListener('click', async ()=>
   showToast('저장된 사진을 모두 삭제했어요.');
 });
 
-document.getElementById('feedback-send-btn').addEventListener('click', ()=>{
+/* Formspree: 공개 제출용 폼 엔드포인트라 프론트엔드에 그대로 둬도 안전함(비밀키 아님) */
+const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xbgljgqq';
+let feedbackType = '버그 신고';
+document.querySelectorAll('.feedback-type-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.feedback-type-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    feedbackType = btn.dataset.type;
+  });
+});
+
+document.getElementById('feedback-send-btn').addEventListener('click', async ()=>{
   const textEl = document.getElementById('feedback-text');
+  const emailEl = document.getElementById('feedback-email');
   const text = textEl.value.trim();
   if(!text){ showToast('내용을 입력해주세요.'); return; }
-  const subject = encodeURIComponent('[원광 캠퍼스 도우미] 피드백');
-  const body = encodeURIComponent(text);
-  window.location.href = `mailto:dbghrb21234@gmail.com?subject=${subject}&body=${body}`;
-  showToast('메일 앱을 열었어요.');
+  const btn = document.getElementById('feedback-send-btn');
+  btn.disabled = true;
+  btn.textContent = '보내는 중...';
+  try{
+    const payload = { type: feedbackType, message: text };
+    const emailVal = emailEl.value.trim();
+    if(emailVal) payload.email = emailVal;
+    const res = await fetch(FORMSPREE_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if(!res.ok) throw new Error('전송 실패: ' + res.status);
+    showToast('피드백을 보냈어요. 감사합니다!');
+    textEl.value = '';
+    emailEl.value = '';
+  }catch(e){
+    console.warn('피드백 전송 실패', e);
+    showToast('전송에 실패했어요. 잠시 후 다시 시도해주세요.');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = '보내기';
+  }
 });
 
 document.querySelectorAll('.home-quick-btn[data-goto]').forEach(btn=>{
