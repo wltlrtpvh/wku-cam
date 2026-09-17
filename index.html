@@ -624,6 +624,10 @@
     font-size:12.5px; color:var(--ink-soft); line-height:1.6;
     margin:10px 0 0;
   }
+  .compare-search{ margin-bottom:0; }
+  .compare-search-results{ max-height:220px; overflow-y:auto; }
+  .compare-search-results .bldg-row{ padding:10px 2px; }
+  .compare-search-results .bldg-row:first-of-type{ border-top:none; }
 
   .empty-note{
     font-size:12.5px;
@@ -1064,10 +1068,19 @@
 
         <div class="detail-compare">
           <div class="detail-compare-label">다른 건물까지 거리</div>
-          <select id="compare-select" class="detail-compare-select" aria-label="비교할 건물 선택">
-            <option value="">건물을 선택하세요</option>
-          </select>
+          <div class="bldg-search compare-search">
+            <span class="search-ic" aria-hidden="true">🔍</span>
+            <input id="compare-search-input" type="text" inputmode="search" placeholder="비교할 건물 검색 (예: 공학관, 59)" aria-label="비교할 건물 검색">
+          </div>
+          <div id="compare-search-results" class="compare-search-results"></div>
           <p class="detail-compare-result" id="detail-compare-result"></p>
+          <div id="compare-map-actions" hidden>
+            <div class="map-app-row">
+              <a id="compare-open-google" class="map-app-btn google" target="_blank" rel="noopener">구글지도</a>
+              <a id="compare-open-kakao" class="map-app-btn kakao" target="_blank" rel="noopener">카카오맵</a>
+              <a id="compare-open-naver" class="map-app-btn naver" target="_blank" rel="noopener">네이버지도</a>
+            </div>
+          </div>
         </div>
 
         <button class="detail-map-btn" id="detail-map-btn">🗺️ 지도에서 보기</button>
@@ -1754,38 +1767,93 @@ async function updateDetailDistLine(b){
   el.textContent = `내 위치에서 ${formatRouteText(result)}`;
 }
 
+/* 두 지점 간 지도 앱 길찾기 링크 생성. "건물 간 경로" 화면과 여기(건물 비교)
+   양쪽에서 재사용하는 공용 함수 — URL 형식을 한 곳에서만 관리한다. */
+function buildRouteMapLinks(a, b){
+  return {
+    google: `https://www.google.com/maps/dir/?api=1&origin=${a.lat},${a.lng}&destination=${b.lat},${b.lng}&travelmode=walking`,
+    kakao: `https://map.kakao.com/link/from/${encodeURIComponent(a.name)},${a.lat},${a.lng}/to/${encodeURIComponent(b.name)},${b.lat},${b.lng}`,
+    naver: `https://map.naver.com/p/directions/${a.lng},${a.lat},${encodeURIComponent(a.name)}/${b.lng},${b.lat},${encodeURIComponent(b.name)}/-/walk`
+  };
+}
+
+let compareQuery = "";
+let compareSelectedId = null;
+
 function setupCompare(a){
-  const sel = document.getElementById('compare-select');
+  const input = document.getElementById('compare-search-input');
+  const resultsEl = document.getElementById('compare-search-results');
   const resultEl = document.getElementById('detail-compare-result');
+  compareQuery = "";
+  compareSelectedId = null;
+  input.value = '';
+  resultsEl.innerHTML = '';
   resultEl.textContent = '';
-  sel.value = '';
+  document.getElementById('compare-map-actions').hidden = true;
   if(a.lat == null){
-    sel.innerHTML = '';
-    sel.disabled = true;
+    input.disabled = true;
     resultEl.textContent = '이 건물은 정확한 위치 정보가 없어 다른 건물과의 거리를 비교할 수 없어요.';
     return;
   }
-  sel.disabled = false;
-  const options = BUILDINGS.filter(b=>b.id!==a.id && b.lat!=null);
-  sel.innerHTML = '<option value="">건물을 선택하세요</option>' +
-    options.map(b=>`<option value="${b.id}">${b.id}. ${b.name}</option>`).join('');
+  input.disabled = false;
 }
 
-document.getElementById('compare-select').addEventListener('change', async (e)=>{
+function renderCompareResults(){
+  const resultsEl = document.getElementById('compare-search-results');
+  const a = BUILDINGS.find(x=>x.id===selectedBuilding);
+  const q = compareQuery.trim().toLowerCase();
+  if(!a || a.lat==null || !q){ resultsEl.innerHTML = ''; return; }
+  // 메인 건물 검색(renderBuildings)과 같은 이름/id/sub 부분일치 필터 + highlightMatch를 그대로 재사용
+  const matches = BUILDINGS.filter(b => b.id!==a.id && b.lat!=null && (
+    b.name.toLowerCase().includes(q) || b.id.toLowerCase().includes(q) || b.sub.toLowerCase().includes(q)
+  ));
+  if(matches.length === 0){
+    resultsEl.innerHTML = `<div class="empty-note">'${compareQuery.trim()}'와 일치하는 건물이 없어요.</div>`;
+    return;
+  }
+  resultsEl.innerHTML = matches.map(b=>`
+    <div class="bldg-row compare-row" data-id="${b.id}">
+      <div class="bldg-badge" style="font-size:${b.id.length>2?'10px':'12.5px'}">${highlightMatch(b.id, q)}</div>
+      <div class="bldg-info">
+        <div class="name">${highlightMatch(b.name, q)}</div>
+        <div class="sub">${b.sub}</div>
+      </div>
+    </div>`).join('');
+  resultsEl.querySelectorAll('.compare-row').forEach(el=>{
+    el.addEventListener('click', ()=> selectCompareBuilding(el.dataset.id));
+  });
+}
+
+document.getElementById('compare-search-input').addEventListener('input', (e)=>{
+  compareQuery = e.target.value;
+  renderCompareResults();
+});
+
+async function selectCompareBuilding(otherId){
+  const input = document.getElementById('compare-search-input');
+  const resultsEl = document.getElementById('compare-search-results');
   const resultEl = document.getElementById('detail-compare-result');
-  const otherId = e.target.value;
-  if(!otherId){ resultEl.textContent = ''; return; }
+  const mapActions = document.getElementById('compare-map-actions');
   const a = BUILDINGS.find(x=>x.id===selectedBuilding);
   const b = BUILDINGS.find(x=>x.id===otherId);
   if(!a || !b || a.lat==null || b.lat==null){
     resultEl.textContent = '두 건물 중 위치 정보가 없는 곳이 있어 거리를 계산할 수 없어요.';
     return;
   }
+  compareSelectedId = otherId;
+  input.value = b.name;
+  resultsEl.innerHTML = '';
+  mapActions.hidden = true;
   resultEl.textContent = '실제 도보 경로를 확인하고 있어요...';
   const result = await getWalkingRoute({lat:a.lat,lng:a.lng}, {lat:b.lat,lng:b.lng});
-  if(document.getElementById('compare-select').value !== otherId) return;
+  if(compareSelectedId !== otherId || selectedBuilding !== a.id) return;
   resultEl.textContent = `${a.name} → ${b.name}: ${formatRouteText(result)}`;
-});
+  const links = buildRouteMapLinks(a, b);
+  document.getElementById('compare-open-google').href = links.google;
+  document.getElementById('compare-open-kakao').href = links.kakao;
+  document.getElementById('compare-open-naver').href = links.naver;
+  mapActions.hidden = false;
+}
 
 function updateDetail(){
   const detailEl = document.getElementById('detail');
@@ -2150,12 +2218,10 @@ async function updateDirectionsResult(){
   currentDirectionsResult = result;
   currentDirectionsPair = {a, b};
 
-  document.getElementById('dir-open-google').href =
-    `https://www.google.com/maps/dir/?api=1&origin=${a.lat},${a.lng}&destination=${b.lat},${b.lng}&travelmode=walking`;
-  document.getElementById('dir-open-kakao').href =
-    `https://map.kakao.com/link/from/${encodeURIComponent(a.name)},${a.lat},${a.lng}/to/${encodeURIComponent(b.name)},${b.lat},${b.lng}`;
-  document.getElementById('dir-open-naver').href =
-    `https://map.naver.com/p/directions/${a.lng},${a.lat},${encodeURIComponent(a.name)}/${b.lng},${b.lat},${encodeURIComponent(b.name)}/-/walk`;
+  const links = buildRouteMapLinks(a, b);
+  document.getElementById('dir-open-google').href = links.google;
+  document.getElementById('dir-open-kakao').href = links.kakao;
+  document.getElementById('dir-open-naver').href = links.naver;
   actionsEl.hidden = false;
 }
 document.getElementById('dir-from-select').addEventListener('change', updateDirectionsResult);
