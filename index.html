@@ -104,17 +104,17 @@
     align-items:center;
     justify-content:space-between;
     flex:none;
-    transform:translateY(0);
     opacity:1;
-    transition:transform 0.28s ease, opacity 0.2s ease;
+    max-height:80px;
+    overflow:hidden;
+    transition:opacity 0.24s ease, max-height 0.24s ease, padding 0.24s ease;
   }
   header.top.collapsed{
-    transform:translateY(-100%);
     opacity:0;
+    max-height:0;
+    padding-top:0;
+    padding-bottom:0;
     pointer-events:none;
-  }
-  header.top.hidden-space{
-    display:none;
   }
   header.top h1{
     font-family:'Gowun Batang', serif;
@@ -667,6 +667,10 @@
   .directions-form label{ font-size:12px; font-weight:600; color:var(--ink-soft); margin-top:12px; }
   .directions-preview{ margin:14px 0 0; }
   .directions-preview-wrap{ max-width:240px; margin:0 auto; cursor:default; touch-action:auto; }
+  .directions-preview-loading{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:12.5px; color:var(--ink-soft); background:var(--bg); text-align:center;
+  }
   .directions-result{
     margin:22px 0 0; padding:16px;
     background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md);
@@ -1136,6 +1140,7 @@
               <img class="static-map-img" src="campus-map.png" alt="경로 미리보기" draggable="false">
               <svg id="directions-preview-svg" viewBox="0 0 1500 1500" preserveAspectRatio="xMidYMid meet" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; display:none;"></svg>
             </div>
+            <div class="directions-preview-loading" id="directions-preview-loading" hidden>경로 계산 중...</div>
           </div>
         </div>
 
@@ -1682,12 +1687,23 @@ function clearRouteOnMap(){
 
 /* 건물 간 경로 화면의 작은 미리보기 지도. 확대/드래그 같은 상호작용 없이
    경로선 + 출발·도착 마커만 보여준다(건물 핀 89개는 그리지 않음). */
+/* 로딩 중에도 미리보기 컨테이너를 미리 펼쳐두고(지도 비율만큼 자리를 확보) 안내 문구만
+   보여준다 — 결과가 도착했을 때 갑자기 큰 이미지가 삽입되며 화면이 튀는 것을 막기 위함. */
+function setDirectionsPreviewLoading(){
+  document.getElementById('directions-preview').hidden = false;
+  document.getElementById('directions-preview-loading').hidden = false;
+  renderRouteInto(document.getElementById('directions-preview-svg'), null);
+}
+function hideDirectionsPreview(){
+  document.getElementById('directions-preview').hidden = true;
+  document.getElementById('directions-preview-loading').hidden = true;
+  renderRouteInto(document.getElementById('directions-preview-svg'), null);
+}
 function renderDirectionsPreview(result, fromPoint, toPoint){
-  const wrap = document.getElementById('directions-preview');
-  const svg = document.getElementById('directions-preview-svg');
-  if(!result){ wrap.hidden = true; renderRouteInto(svg, null); return; }
-  wrap.hidden = false;
-  renderRouteInto(svg, result, fromPoint, toPoint, {showMarkers:true});
+  if(!result){ hideDirectionsPreview(); return; }
+  document.getElementById('directions-preview').hidden = false;
+  document.getElementById('directions-preview-loading').hidden = true;
+  renderRouteInto(document.getElementById('directions-preview-svg'), result, fromPoint, toPoint, {showMarkers:true});
 }
 
 function formatRouteText(result){
@@ -2271,13 +2287,14 @@ async function updateDirectionsResult(){
   currentDirectionsResult = null;
   currentDirectionsPair = null;
   clearRouteOnMap();
-  renderDirectionsPreview(null);
+  hideDirectionsPreview();
   actionsEl.hidden = true;
   if(!fromId || !toId){ resultEl.textContent = ''; return; }
   if(fromId === toId){ resultEl.textContent = '서로 다른 두 건물을 선택해주세요.'; return; }
   const a = BUILDINGS.find(x=>x.id===fromId);
   const b = BUILDINGS.find(x=>x.id===toId);
   resultEl.textContent = '실제 도보 경로를 확인하고 있어요...';
+  setDirectionsPreviewLoading();
   const result = await getWalkingRoute({lat:a.lat,lng:a.lng}, {lat:b.lat,lng:b.lng});
   if(document.getElementById('dir-from-select').value !== fromId || document.getElementById('dir-to-select').value !== toId) return;
   resultEl.textContent = `${a.name} → ${b.name}: ${formatRouteText(result)}`;
@@ -2470,25 +2487,27 @@ document.getElementById('home-search-input').addEventListener('input', (e)=>{
   const mainEl = document.querySelector('main');
   const header = document.querySelector('header.top');
   let lastTop = 0;
-  let hideSpaceTimer = null;
+  // 헤더가 max-height로 접히는 동안 main의 남는 공간이 커져서 스크롤이 바닥 근처면
+  // scrollTop이 살짝 당겨질 수 있는데, 그게 다시 scroll 이벤트로 잡혀 즉시 반대 방향으로
+  // 토글되는 걸 막기 위한 잠금(트랜지션 지속시간 동안만 스크롤 판정을 쉼 — 트리거 자체는
+  // 여전히 히스테리시스 기반으로 한 번만 발생함, 연속 애니메이션이 아님).
+  let headerLocked = false;
 
   function collapseHeader(){
     if(header.classList.contains('collapsed')) return;
     header.classList.add('collapsed');
-    clearTimeout(hideSpaceTimer);
-    hideSpaceTimer = setTimeout(()=>{
-      header.classList.add('hidden-space');
-    }, 280);
+    headerLocked = true;
+    setTimeout(()=>{ headerLocked = false; }, 300);
   }
   function expandHeader(){
-    clearTimeout(hideSpaceTimer);
     if(!header.classList.contains('collapsed')) return;
-    header.classList.remove('hidden-space');
-    void header.offsetHeight; // 강제 리플로우: display가 먼저 복원된 뒤에 transform 전환이 재생되도록 함
     header.classList.remove('collapsed');
+    headerLocked = true;
+    setTimeout(()=>{ headerLocked = false; }, 300);
   }
 
   mainEl.addEventListener('scroll', ()=>{
+    if(headerLocked) return;
     const top = mainEl.scrollTop;
     if(top <= 0){
       expandHeader();
