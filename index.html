@@ -393,7 +393,7 @@
   .map-img-wrap:active{ cursor:grabbing; }
   .map-img-inner{
     position:absolute; top:0; left:0; width:100%; height:100%;
-    transform-origin:0 0; will-change:transform;
+    transform-origin:center center; will-change:transform;
   }
   #campus-map-img{
     position:absolute; top:0; left:0; width:100%; height:100%;
@@ -401,14 +401,15 @@
   }
   #map-pins{ position:absolute; inset:0; }
   .map-pin{
-    position:absolute; width:24px; height:24px; margin:-12px 0 0 -12px;
+    position:absolute; width:20px; height:20px; margin:-10px 0 0 -10px;
     border-radius:50%; cursor:pointer;
-    background:rgba(169,131,74,0.16);
-    border:1.3px solid rgba(169,131,74,0.55);
-    transition:background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+    background:rgba(255,252,244,0.94);
+    border:2px solid var(--gold-deep);
+    box-shadow:0 1px 5px rgba(0,0,0,0.4);
+    transition:background 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
   }
-  .map-pin.matched{ background:var(--gold); border-color:var(--gold); transform:scale(1.3); }
-  .map-pin.selected{ background:var(--danger); border-color:var(--danger); transform:scale(1.4); }
+  .map-pin.matched{ background:var(--gold); border-color:var(--ink); transform:scale(1.3); }
+  .map-pin.selected{ background:var(--danger); border-color:#fff; transform:scale(1.4); box-shadow:0 2px 8px rgba(0,0,0,0.5); }
   .map-controls{
     position:absolute; top:8px; right:8px;
     display:flex; flex-direction:column; gap:4px;
@@ -482,6 +483,7 @@
     box-shadow:var(--shadow-lift);
     position:relative;
   }
+  .map-popover[hidden]{ display:none; }
   .map-popover-close{
     position:absolute; top:8px; right:8px;
     width:24px; height:24px; border-radius:50%;
@@ -1706,9 +1708,19 @@ let mapPanX = 0, mapPanY = 0, mapZoom = 1;
 let mapDragging = false, mapLastX = 0, mapLastY = 0;
 let mapDidDrag = false;
 
+function clampMapPan(){
+  const wrap = document.getElementById('map-img-wrap');
+  if(!wrap) return;
+  const maxX = wrap.clientWidth * (mapZoom - 1) / 2;
+  const maxY = wrap.clientHeight * (mapZoom - 1) / 2;
+  mapPanX = Math.max(-maxX, Math.min(maxX, mapPanX));
+  mapPanY = Math.max(-maxY, Math.min(maxY, mapPanY));
+}
+
 function applyMapTransform(){
   const inner = document.getElementById('map-img-inner');
   if(!inner) return;
+  clampMapPan();
   inner.style.transform = `translate(${mapPanX}px,${mapPanY}px) scale(${mapZoom})`;
 }
 
