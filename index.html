@@ -113,6 +113,9 @@
     opacity:0;
     pointer-events:none;
   }
+  header.top.hidden-space{
+    display:none;
+  }
   header.top h1{
     font-family:'Gowun Batang', serif;
     font-weight:700;
@@ -2005,15 +2008,32 @@ document.getElementById('home-search-input').addEventListener('input', (e)=>{
   const mainEl = document.querySelector('main');
   const header = document.querySelector('header.top');
   let lastTop = 0;
+  let hideSpaceTimer = null;
+
+  function collapseHeader(){
+    if(header.classList.contains('collapsed')) return;
+    header.classList.add('collapsed');
+    clearTimeout(hideSpaceTimer);
+    hideSpaceTimer = setTimeout(()=>{
+      header.classList.add('hidden-space');
+    }, 280);
+  }
+  function expandHeader(){
+    clearTimeout(hideSpaceTimer);
+    if(!header.classList.contains('collapsed')) return;
+    header.classList.remove('hidden-space');
+    void header.offsetHeight; // 강제 리플로우: display가 먼저 복원된 뒤에 transform 전환이 재생되도록 함
+    header.classList.remove('collapsed');
+  }
 
   mainEl.addEventListener('scroll', ()=>{
     const top = mainEl.scrollTop;
     if(top <= 0){
-      header.classList.remove('collapsed');
+      expandHeader();
     } else if(top > lastTop + 4){
-      header.classList.add('collapsed');
+      collapseHeader();
     } else if(top < lastTop - 4){
-      header.classList.remove('collapsed');
+      expandHeader();
     }
     lastTop = top <= 0 ? 0 : top;
   }, {passive:true});
