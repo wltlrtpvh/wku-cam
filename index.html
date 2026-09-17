@@ -633,6 +633,8 @@
     font-size:13.5px; color:var(--ink); line-height:1.7; text-align:center;
   }
   .directions-result:empty{ display:none; }
+  .directions-map-actions{ margin-top:14px; }
+  .directions-map-actions .map-app-row{ margin-top:10px; }
 
   /* ---- Meditation nap ---- */
   .med-card{
@@ -982,6 +984,7 @@
         <div class="map-img-wrap" id="map-img-wrap">
           <div class="map-img-inner" id="map-img-inner">
             <img id="campus-map-img" src="campus-map.png" alt="원광대학교 캠퍼스맵" draggable="false">
+            <svg id="map-route-svg" viewBox="0 0 1500 1500" preserveAspectRatio="none" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; display:none;"></svg>
             <div id="map-pins"></div>
           </div>
         </div>
@@ -1070,6 +1073,15 @@
         </div>
 
         <p class="directions-result" id="directions-result"></p>
+
+        <div class="directions-map-actions" id="directions-map-actions" hidden>
+          <button class="detail-map-btn" id="directions-show-on-map">🗺️ 지도에서 경로 보기</button>
+          <div class="map-app-row">
+            <a id="dir-open-google" class="map-app-btn google" target="_blank" rel="noopener">구글지도</a>
+            <a id="dir-open-kakao" class="map-app-btn kakao" target="_blank" rel="noopener">카카오맵</a>
+            <a id="dir-open-naver" class="map-app-btn naver" target="_blank" rel="noopener">네이버지도</a>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1467,12 +1479,14 @@ async function getWalkingRoute(from, to){
     const res = await fetch(url);
     if(!res.ok) throw new Error('ORS request failed: ' + res.status);
     const data = await res.json();
-    const summary = data.features[0].properties.summary;
+    const feature = data.features[0];
+    const summary = feature.properties.summary;
     const result = {
       distance: summary.distance,
       walkMinutes: Math.max(1, Math.round(summary.duration/60)),
       runMinutes: estimateRunMinutes(summary.distance),
-      isReal: true
+      isReal: true,
+      geometry: feature.geometry.coordinates // [[lng,lat], ...] 실제 경로 좌표
     };
     routeCache[key] = result;
     return result;
@@ -1483,9 +1497,108 @@ async function getWalkingRoute(from, to){
       distance: straight,
       walkMinutes: estimateWalkMinutes(straight),
       runMinutes: estimateRunMinutes(straight),
-      isReal: false
+      isReal: false,
+      geometry: null
     };
   }
+}
+
+/* ---------------- 실제 위경도 -> 캠퍼스맵 픽셀 좌표 변환 ----------------
+   실제 GPS 좌표와 지도 위 픽셀 좌표를 둘 다 갖고 있는 건물들을 기준점 삼아
+   최소제곱법으로 아핀 변환을 구한다(추측이 아니라 실측 데이터 기반 계산). */
+function solve3x3(A, bvec){
+  function det3(m){
+    return m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1])
+         - m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0])
+         + m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0]);
+  }
+  const D = det3(A);
+  const withCol = (col, vec)=> A.map((row,i)=> row.map((v,j)=> j===col ? vec[i] : v));
+  return [det3(withCol(0,bvec))/D, det3(withCol(1,bvec))/D, det3(withCol(2,bvec))/D];
+}
+
+function fitGeoToPixel(pts){
+  const meanLat = pts.reduce((s,b)=>s+b.lat,0) / pts.length;
+  const meanLng = pts.reduce((s,b)=>s+b.lng,0) / pts.length;
+  let Sll=0, Slg=0, Sgg=0;
+  let Spx=0, Spxl=0, Spxg=0, Spy=0, Spyl=0, Spyg=0;
+  for(const b of pts){
+    const lat = b.lat - meanLat, lng = b.lng - meanLng;
+    const px = b.px, py = b.py;
+    Sll += lat*lat; Slg += lat*lng; Sgg += lng*lng;
+    Spx += px; Spxl += px*lat; Spxg += px*lng;
+    Spy += py; Spyl += py*lat; Spyg += py*lng;
+  }
+  const N = pts.length;
+  const A = [
+    [Sll, Slg, 0],
+    [Slg, Sgg, 0],
+    [0, 0, N]
+  ];
+  return {
+    meanLat, meanLng,
+    px: solve3x3(A, [Spxl, Spxg, Spx]),
+    py: solve3x3(A, [Spyl, Spyg, Spy])
+  };
+}
+
+let geoToPixelCoefs = null;
+function getGeoToPixelCoefs(){
+  if(geoToPixelCoefs) return geoToPixelCoefs;
+  const pts = BUILDINGS.filter(b=>b.lat!=null && b.px!=null);
+  /* 위도·경도 원값(예: 35.97)은 실제 캠퍼스 안에서의 차이(약 0.01)에 비해 숫자가 너무 커서
+     그대로 최소제곱법에 넣으면 부동소수점 정밀도 손실로 계산이 어긋난다.
+     평균을 빼서 작은 값으로 만든 뒤(중심화) 계산해야 정확하다.
+     1차로 맞춰본 뒤 유난히 어긋나는 기준점(그려진 위치가 실제 GPS와 안 맞는 건물)은
+     빼고 다시 맞춰서 나머지 대부분의 정확도를 높인다. */
+  const firstFit = fitGeoToPixel(pts);
+  const withResidual = pts.map(b=>{
+    const dlat = b.lat - firstFit.meanLat, dlng = b.lng - firstFit.meanLng;
+    const px = firstFit.px[0]*dlat + firstFit.px[1]*dlng + firstFit.px[2];
+    const py = firstFit.py[0]*dlat + firstFit.py[1]*dlng + firstFit.py[2];
+    return {b, err: Math.hypot(px-b.px, py-b.py)};
+  });
+  const errs = withResidual.map(w=>w.err).sort((a,c)=>a-c);
+  const median = errs[Math.floor(errs.length/2)];
+  const goodPts = withResidual.filter(w=> w.err <= Math.max(median*3, 100)).map(w=>w.b);
+  geoToPixelCoefs = goodPts.length >= 6 ? fitGeoToPixel(goodPts) : firstFit;
+  return geoToPixelCoefs;
+}
+function geoToPixel(lat, lng){
+  const c = getGeoToPixelCoefs();
+  const dlat = lat - c.meanLat, dlng = lng - c.meanLng;
+  return {
+    px: c.px[0]*dlat + c.px[1]*dlng + c.px[2],
+    py: c.py[0]*dlat + c.py[1]*dlng + c.py[2]
+  };
+}
+
+function renderRouteOnMap(result, fromPoint, toPoint){
+  const svg = document.getElementById('map-route-svg');
+  if(!result){ svg.style.display = 'none'; svg.innerHTML = ''; return; }
+  let points;
+  if(result.geometry && result.geometry.length){
+    points = result.geometry.map(([lng, lat])=>{
+      const p = geoToPixel(lat, lng);
+      return `${p.px.toFixed(1)},${p.py.toFixed(1)}`;
+    }).join(' ');
+  } else if(fromPoint && toPoint){
+    const p1 = geoToPixel(fromPoint.lat, fromPoint.lng);
+    const p2 = geoToPixel(toPoint.lat, toPoint.lng);
+    points = `${p1.px.toFixed(1)},${p1.py.toFixed(1)} ${p2.px.toFixed(1)},${p2.py.toFixed(1)}`;
+  } else {
+    svg.style.display = 'none'; svg.innerHTML = ''; return;
+  }
+  const strokeColor = result.isReal ? '#c0392b' : '#8a3a2c';
+  const dash = result.isReal ? '' : 'stroke-dasharray="18 14"';
+  svg.innerHTML = `<polyline points="${points}" fill="none" stroke="${strokeColor}" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" opacity="0.85" ${dash}/>`;
+  svg.style.display = 'block';
+}
+function clearRouteOnMap(){
+  const svg = document.getElementById('map-route-svg');
+  if(!svg) return;
+  svg.style.display = 'none';
+  svg.innerHTML = '';
 }
 
 function formatRouteText(result){
@@ -1739,6 +1852,7 @@ document.getElementById('detail-map-btn').addEventListener('click', ()=>{
 /* ---------------- Map popover (marker tap info card) ---------------- */
 function onPinTap(id){
   const wasSelected = selectedBuilding === id;
+  clearRouteOnMap();
   selectBuilding(id);
   if(wasSelected){ hideMapPopover(); } else { showMapPopoverContent(id); }
 }
@@ -1951,10 +2065,18 @@ function populateDirectionsSelects(){
 }
 populateDirectionsSelects();
 
+let currentDirectionsResult = null;
+let currentDirectionsPair = null;
+
 async function updateDirectionsResult(){
   const resultEl = document.getElementById('directions-result');
+  const actionsEl = document.getElementById('directions-map-actions');
   const fromId = document.getElementById('dir-from-select').value;
   const toId = document.getElementById('dir-to-select').value;
+  currentDirectionsResult = null;
+  currentDirectionsPair = null;
+  clearRouteOnMap();
+  actionsEl.hidden = true;
   if(!fromId || !toId){ resultEl.textContent = ''; return; }
   if(fromId === toId){ resultEl.textContent = '서로 다른 두 건물을 선택해주세요.'; return; }
   const a = BUILDINGS.find(x=>x.id===fromId);
@@ -1963,9 +2085,26 @@ async function updateDirectionsResult(){
   const result = await getWalkingRoute({lat:a.lat,lng:a.lng}, {lat:b.lat,lng:b.lng});
   if(document.getElementById('dir-from-select').value !== fromId || document.getElementById('dir-to-select').value !== toId) return;
   resultEl.textContent = `${a.name} → ${b.name}: ${formatRouteText(result)}`;
+  currentDirectionsResult = result;
+  currentDirectionsPair = {a, b};
+
+  document.getElementById('dir-open-google').href =
+    `https://www.google.com/maps/dir/?api=1&origin=${a.lat},${a.lng}&destination=${b.lat},${b.lng}&travelmode=walking`;
+  document.getElementById('dir-open-kakao').href =
+    `https://map.kakao.com/link/from/${encodeURIComponent(a.name)},${a.lat},${a.lng}/to/${encodeURIComponent(b.name)},${b.lat},${b.lng}`;
+  document.getElementById('dir-open-naver').href =
+    `https://map.naver.com/p/directions/${a.lng},${a.lat},${encodeURIComponent(a.name)}/${b.lng},${b.lat},${encodeURIComponent(b.name)}/-/walk`;
+  actionsEl.hidden = false;
 }
 document.getElementById('dir-from-select').addEventListener('change', updateDirectionsResult);
 document.getElementById('dir-to-select').addEventListener('change', updateDirectionsResult);
+
+document.getElementById('directions-show-on-map').addEventListener('click', ()=>{
+  if(!currentDirectionsResult || !currentDirectionsPair) return;
+  const {a, b} = currentDirectionsPair;
+  switchView('map');
+  renderRouteOnMap(currentDirectionsResult, {lat:a.lat,lng:a.lng}, {lat:b.lat,lng:b.lng});
+});
 
 /* ---------------- View switching (tabs + programmatic navigation) ---------------- */
 let noticeScrollTop = 0;
