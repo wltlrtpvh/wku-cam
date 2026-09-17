@@ -364,7 +364,7 @@
     font-size:12px;
     font-weight:600;
     color:var(--ink-soft);
-    margin:26px 0 12px;
+    margin:18px 0 10px;
   }
 
   /* ---- Nav tab ---- */
@@ -395,7 +395,7 @@
     position:absolute; top:0; left:0; width:100%; height:100%;
     transform-origin:center center; will-change:transform;
   }
-  #campus-map-img{
+  #campus-map-img, .static-map-img{
     position:absolute; top:0; left:0; width:100%; height:100%;
     object-fit:contain; user-select:none; -webkit-user-drag:none; pointer-events:none;
   }
@@ -455,16 +455,16 @@
   .hl-match{ color:var(--gold-deep); font-weight:700; }
 
   /* ---- Home ---- */
-  .home-hero{ padding:8px 0 4px; text-align:center; }
-  .home-eyebrow{ font-size:12px; color:var(--gold-deep); letter-spacing:0.06em; margin:0 0 6px; }
+  .home-hero{ padding:4px 0 0; text-align:center; }
+  .home-eyebrow{ font-size:12px; color:var(--gold-deep); letter-spacing:0.06em; margin:0 0 4px; }
   :root[data-theme="dark"] .home-eyebrow, :root:not([data-theme="light"]) .home-eyebrow{ color:var(--gold); }
   .home-title{
     font-family:'Gowun Batang', serif; font-weight:700; font-size:24px;
-    margin:0 0 18px;
+    margin:0 0 14px;
   }
   .home-search input{ font-size:16px; }
-  .home-hint{ font-size:12.5px; color:var(--ink-soft); margin:12px 0 0; line-height:1.6; }
-  .home-recent{ margin-top:28px; }
+  .home-directions-btn{ display:block; width:100%; max-width:none; margin:16px 0 0; }
+  .home-recent{ margin-top:18px; }
   .home-recent-list{ display:flex; flex-wrap:wrap; gap:8px; }
   .home-recent-chip{
     padding:8px 14px; border-radius:var(--radius-pill);
@@ -474,7 +474,7 @@
   }
   .home-quick-grid{
     display:grid; grid-template-columns:repeat(2,1fr); gap:10px;
-    margin-top:14px;
+    margin-top:10px;
   }
   .home-quick-btn{
     display:flex; flex-direction:column; align-items:center; gap:8px;
@@ -486,7 +486,7 @@
   .home-quick-btn span{ font-size:22px; }
   .home-locate-status{
     min-height:16px; text-align:center;
-    font-size:12px; color:var(--ink-soft); margin:14px 0 0;
+    font-size:12px; color:var(--ink-soft); margin:8px 0 0;
   }
 
   /* ---- Map marker popover ---- */
@@ -650,6 +650,8 @@
   }
   .directions-form{ display:flex; flex-direction:column; gap:6px; }
   .directions-form label{ font-size:12px; font-weight:600; color:var(--ink-soft); margin-top:12px; }
+  .directions-preview{ margin:14px 0 0; }
+  .directions-preview-wrap{ max-width:240px; margin:0 auto; cursor:default; touch-action:auto; }
   .directions-result{
     margin:22px 0 0; padding:16px;
     background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md);
@@ -977,7 +979,8 @@
           <span class="search-ic" aria-hidden="true">🔍</span>
           <input id="home-search-input" type="text" inputmode="search" placeholder="건물명, 건물번호로 검색 (예: 59, 학생회관)" aria-label="건물 검색">
         </div>
-        <p class="home-hint">현재 위치에서 목적지까지 빠르게 찾아보세요.</p>
+        <button class="detail-map-btn" id="home-locate-btn">📍 내 위치로 찾기</button>
+        <p class="home-locate-status" id="home-locate-status"></p>
       </div>
 
       <div class="home-recent" id="home-recent" hidden>
@@ -985,14 +988,13 @@
         <div class="home-recent-list" id="home-recent-list"></div>
       </div>
 
+      <button class="med-main-btn home-directions-btn" data-goto="directions">🚶 건물 간 경로</button>
+
       <div class="section-label">빠른 기능</div>
       <div class="home-quick-grid">
         <button class="home-quick-btn" data-goto="map"><span aria-hidden="true">🗺️</span>캠퍼스 지도</button>
-        <button class="home-quick-btn" id="home-locate-btn"><span aria-hidden="true">📍</span>내 위치</button>
         <button class="home-quick-btn" data-goto="notice"><span aria-hidden="true">📢</span>공지사항</button>
-        <button class="home-quick-btn" data-goto="directions"><span aria-hidden="true">🚶</span>건물 간 경로</button>
       </div>
-      <p class="home-locate-status" id="home-locate-status"></p>
     </section>
 
     <section id="view-notice" class="view">
@@ -1111,6 +1113,15 @@
         </div>
 
         <p class="directions-result" id="directions-result"></p>
+
+        <div class="directions-preview" id="directions-preview" hidden>
+          <div class="map-img-wrap directions-preview-wrap">
+            <div class="map-img-inner">
+              <img class="static-map-img" src="campus-map.png" alt="경로 미리보기" draggable="false">
+              <svg id="directions-preview-svg" viewBox="0 0 1500 1500" preserveAspectRatio="xMidYMid meet" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; display:none;"></svg>
+            </div>
+          </div>
+        </div>
 
         <div class="directions-map-actions" id="directions-map-actions" hidden>
           <button class="detail-map-btn" id="directions-show-on-map">🗺️ 지도에서 경로 보기</button>
@@ -1611,32 +1622,56 @@ function geoToPixel(lat, lng){
   };
 }
 
-function renderRouteOnMap(result, fromPoint, toPoint){
-  const svg = document.getElementById('map-route-svg');
-  if(!result){ svg.style.display = 'none'; svg.innerHTML = ''; return; }
-  let points;
+/* 경로선 좌표 계산과 SVG 마크업 생성을 공용 함수로 뽑아서, 지도 탭의 경로선과
+   건물 간 경로 화면의 작은 미리보기 지도가 target SVG만 다르게 넣어 재사용한다. */
+function routePolylinePoints(result, fromPoint, toPoint){
   if(result.geometry && result.geometry.length){
-    points = result.geometry.map(([lng, lat])=>{
+    return result.geometry.map(([lng, lat])=>{
       const p = geoToPixel(lat, lng);
       return `${p.px.toFixed(1)},${p.py.toFixed(1)}`;
     }).join(' ');
-  } else if(fromPoint && toPoint){
+  }
+  if(fromPoint && toPoint){
     const p1 = geoToPixel(fromPoint.lat, fromPoint.lng);
     const p2 = geoToPixel(toPoint.lat, toPoint.lng);
-    points = `${p1.px.toFixed(1)},${p1.py.toFixed(1)} ${p2.px.toFixed(1)},${p2.py.toFixed(1)}`;
-  } else {
-    svg.style.display = 'none'; svg.innerHTML = ''; return;
+    return `${p1.px.toFixed(1)},${p1.py.toFixed(1)} ${p2.px.toFixed(1)},${p2.py.toFixed(1)}`;
   }
+  return null;
+}
+
+function renderRouteInto(svg, result, fromPoint, toPoint, opts){
+  if(!svg) return;
+  if(!result){ svg.style.display = 'none'; svg.innerHTML = ''; return; }
+  const points = routePolylinePoints(result, fromPoint, toPoint);
+  if(!points){ svg.style.display = 'none'; svg.innerHTML = ''; return; }
   const strokeColor = result.isReal ? '#c0392b' : '#8a3a2c';
   const dash = result.isReal ? '' : 'stroke-dasharray="18 14"';
-  svg.innerHTML = `<polyline points="${points}" fill="none" stroke="${strokeColor}" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" opacity="0.85" ${dash}/>`;
+  let markers = '';
+  if(opts && opts.showMarkers && fromPoint && toPoint){
+    const p1 = geoToPixel(fromPoint.lat, fromPoint.lng);
+    const p2 = geoToPixel(toPoint.lat, toPoint.lng);
+    markers = `<circle cx="${p1.px.toFixed(1)}" cy="${p1.py.toFixed(1)}" r="22" fill="var(--sage)" stroke="#fff" stroke-width="5"/>` +
+      `<circle cx="${p2.px.toFixed(1)}" cy="${p2.py.toFixed(1)}" r="22" fill="var(--danger)" stroke="#fff" stroke-width="5"/>`;
+  }
+  svg.innerHTML = `<polyline points="${points}" fill="none" stroke="${strokeColor}" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" opacity="0.92" ${dash}/>${markers}`;
   svg.style.display = 'block';
 }
+
+function renderRouteOnMap(result, fromPoint, toPoint){
+  renderRouteInto(document.getElementById('map-route-svg'), result, fromPoint, toPoint);
+}
 function clearRouteOnMap(){
-  const svg = document.getElementById('map-route-svg');
-  if(!svg) return;
-  svg.style.display = 'none';
-  svg.innerHTML = '';
+  renderRouteOnMap(null);
+}
+
+/* 건물 간 경로 화면의 작은 미리보기 지도. 확대/드래그 같은 상호작용 없이
+   경로선 + 출발·도착 마커만 보여준다(건물 핀 89개는 그리지 않음). */
+function renderDirectionsPreview(result, fromPoint, toPoint){
+  const wrap = document.getElementById('directions-preview');
+  const svg = document.getElementById('directions-preview-svg');
+  if(!result){ wrap.hidden = true; renderRouteInto(svg, null); return; }
+  wrap.hidden = false;
+  renderRouteInto(svg, result, fromPoint, toPoint, {showMarkers:true});
 }
 
 function formatRouteText(result){
@@ -2217,6 +2252,7 @@ async function updateDirectionsResult(){
   currentDirectionsResult = null;
   currentDirectionsPair = null;
   clearRouteOnMap();
+  renderDirectionsPreview(null);
   actionsEl.hidden = true;
   if(!fromId || !toId){ resultEl.textContent = ''; return; }
   if(fromId === toId){ resultEl.textContent = '서로 다른 두 건물을 선택해주세요.'; return; }
@@ -2228,6 +2264,7 @@ async function updateDirectionsResult(){
   resultEl.textContent = `${a.name} → ${b.name}: ${formatRouteText(result)}`;
   currentDirectionsResult = result;
   currentDirectionsPair = {a, b};
+  renderDirectionsPreview(result, {lat:a.lat,lng:a.lng}, {lat:b.lat,lng:b.lng});
 
   const links = buildRouteMapLinks(a, b);
   document.getElementById('dir-open-google').href = links.google;
@@ -2394,7 +2431,7 @@ document.getElementById('feedback-send-btn').addEventListener('click', async ()=
   }
 });
 
-document.querySelectorAll('.home-quick-btn[data-goto]').forEach(btn=>{
+document.querySelectorAll('#view-home [data-goto]').forEach(btn=>{
   btn.addEventListener('click', ()=> switchView(btn.dataset.goto));
 });
 
