@@ -1706,9 +1706,9 @@ function renderMap(){
     return `<div class="map-pin ${sel?'selected':''} ${matched?'matched':''}" data-id="${b.id}" style="left:${leftPct}%; top:${topPct}%;" title="${b.id}. ${b.name}"></div>`;
   }).join('');
 
-  pinsWrap.querySelectorAll('.map-pin').forEach(el=>{
-    el.addEventListener('click', ()=> onPinTap(el.dataset.id));
-  });
+  /* 핀 탭 처리는 map-img-wrap의 pointerup 핸들러(드래그와 탭을 구분)에서 일괄 처리한다.
+     wrap이 pointerdown마다 포인터를 캡처하기 때문에 핀 자체의 click 이벤트는 신뢰할 수 없어서
+     여기서 별도의 click 리스너를 달지 않는다(예전엔 두 경로가 겹쳐서 선택 직후 바로 취소되는 버그가 있었다). */
 }
 
 function selectBuilding(id){
@@ -1868,7 +1868,7 @@ function applyMapTransform(){
     if(!mapDidDrag){
       const hit = document.elementFromPoint(e.clientX, e.clientY);
       const pin = hit && hit.closest ? hit.closest('.map-pin') : null;
-      if(pin){ selectBuilding(pin.dataset.id); }
+      if(pin){ onPinTap(pin.dataset.id); }
     }
   });
 
