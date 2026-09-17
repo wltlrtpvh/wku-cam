@@ -486,6 +486,25 @@
     line-height:1.6;
   }
 
+  /* ---- Building-to-building directions ---- */
+  .directions-card{ position:relative; padding-top:30px; }
+  .directions-title{
+    font-family:'Gowun Batang', serif; font-size:20px; font-weight:700;
+    margin:0 0 8px; text-align:center;
+  }
+  .directions-hint{
+    font-size:12.5px; color:var(--ink-soft); text-align:center;
+    line-height:1.6; margin:0 0 26px;
+  }
+  .directions-form{ display:flex; flex-direction:column; gap:6px; }
+  .directions-form label{ font-size:12px; font-weight:600; color:var(--ink-soft); margin-top:12px; }
+  .directions-result{
+    margin:22px 0 0; padding:16px;
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md);
+    font-size:13.5px; color:var(--ink); line-height:1.7; text-align:center;
+  }
+  .directions-result:empty{ display:none; }
+
   /* ---- Meditation nap ---- */
   .med-card{
     position:relative;
@@ -775,6 +794,7 @@
         <button class="home-quick-btn" id="home-locate-btn"><span aria-hidden="true">📍</span>내 위치</button>
         <button class="home-quick-btn" data-goto="notice"><span aria-hidden="true">📢</span>공지사항</button>
         <button class="home-quick-btn" data-goto="meditation"><span aria-hidden="true">🌙</span>명상냅</button>
+        <button class="home-quick-btn" data-goto="directions"><span aria-hidden="true">🚶</span>건물 간 경로</button>
       </div>
       <p class="home-locate-status" id="home-locate-status"></p>
     </section>
@@ -861,6 +881,25 @@
 
       <div id="bldg-list"></div>
       <div class="empty-note" id="bldg-empty">건물을 탭하면 사진·정보·지도를 볼 수 있어요.</div>
+    </section>
+
+    <!-- ============ BUILDING-TO-BUILDING DIRECTIONS VIEW ============ -->
+    <section id="view-directions" class="view">
+      <div class="directions-card">
+        <button class="med-back-btn" onclick="switchView('home')" aria-label="홈으로 돌아가기">← 홈</button>
+        <h2 class="directions-title">건물 간 경로</h2>
+        <p class="directions-hint">위치 정보가 있는 건물끼리 실제 도보 경로로 거리와 시간을 계산해요.</p>
+
+        <div class="directions-form">
+          <label for="dir-from-select">출발 건물</label>
+          <select id="dir-from-select" class="detail-compare-select"><option value="">건물을 선택하세요</option></select>
+
+          <label for="dir-to-select">도착 건물</label>
+          <select id="dir-to-select" class="detail-compare-select"><option value="">건물을 선택하세요</option></select>
+        </div>
+
+        <p class="directions-result" id="directions-result"></p>
+      </div>
     </section>
 
     <!-- ============ MEDITATION NAP VIEW ============ -->
@@ -1137,6 +1176,50 @@ function haversine(lat1,lon1,lat2,lon2){
   const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
   return 2*R*Math.asin(Math.sqrt(a));
 }
+
+/* ---------------- Real walking-route lookup (OpenRouteService) ----------------
+   무료 공개 API 키(읽기 전용, 요청 제한 있음)이며 클라이언트에서 직접 호출하도록
+   OpenRouteService 공식 문서가 안내하는 사용 방식이라 코드에 그대로 둔다.
+   실패하면(오프라인/한도초과/경로없음) 직선거리 추정으로 조용히 대체하되,
+   결과에는 반드시 "추정"이라고 표시해서 실제 경로처럼 속이지 않는다. */
+const ORS_API_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjY0YzU1ODQ5ODM4YTQ5OWZiNTJiYzU5ZDlhNmQwN2E5IiwiaCI6Im11cm11cjY0In0=';
+const routeCache = {};
+
+async function getWalkingRoute(from, to){
+  const key = `${from.lat.toFixed(5)},${from.lng.toFixed(5)}_${to.lat.toFixed(5)},${to.lng.toFixed(5)}`;
+  if(routeCache[key]) return routeCache[key];
+  try{
+    const url = `https://api.openrouteservice.org/v2/directions/foot-walking?api_key=${ORS_API_KEY}&start=${from.lng},${from.lat}&end=${to.lng},${to.lat}`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('ORS request failed: ' + res.status);
+    const data = await res.json();
+    const summary = data.features[0].properties.summary;
+    const result = {
+      distance: summary.distance,
+      walkMinutes: Math.max(1, Math.round(summary.duration/60)),
+      runMinutes: estimateRunMinutes(summary.distance),
+      isReal: true
+    };
+    routeCache[key] = result;
+    return result;
+  }catch(e){
+    console.warn('실제 도보 경로를 가져오지 못해 직선거리로 추정합니다.', e);
+    const straight = haversine(from.lat, from.lng, to.lat, to.lng);
+    return {
+      distance: straight,
+      walkMinutes: estimateWalkMinutes(straight),
+      runMinutes: estimateRunMinutes(straight),
+      isReal: false
+    };
+  }
+}
+
+function formatRouteText(result){
+  const distTxt = result.distance<1000 ? `${Math.round(result.distance)}m` : `${(result.distance/1000).toFixed(2)}km`;
+  const distTag = result.isReal ? '' : ' (직선거리 추정)';
+  return `약 ${distTxt}${distTag} · 도보 ${result.walkMinutes}분 · 달리기 ${result.runMinutes}분(추정)`;
+}
+
 let bldgQuery = "";
 
 function highlightMatch(text, q){
@@ -1219,7 +1302,7 @@ function renderIllust(b){
 function estimateWalkMinutes(meters){ return Math.max(1, Math.round(meters/70)); }
 function estimateRunMinutes(meters){ return Math.max(1, Math.round(meters/150)); }
 
-function updateDetailDistLine(b){
+async function updateDetailDistLine(b){
   const wrap = document.getElementById('detail-dist-line');
   const el = document.getElementById('detail-dist-text');
   if(b.lat == null){
@@ -1234,11 +1317,13 @@ function updateDetailDistLine(b){
     wrap.onclick = requestUserLocation;
     return;
   }
-  const d = haversine(userPos.lat,userPos.lng,b.lat,b.lng);
-  const distTxt = d<1000 ? `${Math.round(d)}m` : `${(d/1000).toFixed(2)}km`;
-  el.textContent = `내 위치에서 약 ${distTxt} · 도보 ${estimateWalkMinutes(d)}분 · 달리기 ${estimateRunMinutes(d)}분`;
   wrap.classList.remove('clickable');
   wrap.onclick = requestUserLocation;
+  el.textContent = '실제 도보 경로를 확인하고 있어요...';
+  const myId = b.id;
+  const result = await getWalkingRoute(userPos, {lat:b.lat, lng:b.lng});
+  if(selectedBuilding !== myId) return; // 그 사이 다른 건물을 선택했으면 결과를 버린다
+  el.textContent = `내 위치에서 ${formatRouteText(result)}`;
 }
 
 function setupCompare(a){
@@ -1258,7 +1343,7 @@ function setupCompare(a){
     options.map(b=>`<option value="${b.id}">${b.id}. ${b.name}</option>`).join('');
 }
 
-document.getElementById('compare-select').addEventListener('change', (e)=>{
+document.getElementById('compare-select').addEventListener('change', async (e)=>{
   const resultEl = document.getElementById('detail-compare-result');
   const otherId = e.target.value;
   if(!otherId){ resultEl.textContent = ''; return; }
@@ -1268,9 +1353,10 @@ document.getElementById('compare-select').addEventListener('change', (e)=>{
     resultEl.textContent = '두 건물 중 위치 정보가 없는 곳이 있어 거리를 계산할 수 없어요.';
     return;
   }
-  const d = haversine(a.lat,a.lng,b.lat,b.lng);
-  const distTxt = d<1000 ? `${Math.round(d)}m` : `${(d/1000).toFixed(2)}km`;
-  resultEl.textContent = `${a.name} → ${b.name}: 약 ${distTxt} · 도보 ${estimateWalkMinutes(d)}분 · 달리기 ${estimateRunMinutes(d)}분`;
+  resultEl.textContent = '실제 도보 경로를 확인하고 있어요...';
+  const result = await getWalkingRoute({lat:a.lat,lng:a.lng}, {lat:b.lat,lng:b.lng});
+  if(document.getElementById('compare-select').value !== otherId) return;
+  resultEl.textContent = `${a.name} → ${b.name}: ${formatRouteText(result)}`;
 });
 
 function updateDetail(){
@@ -1556,6 +1642,33 @@ function requestUserLocation(){
   );
 }
 document.getElementById('home-locate-btn').addEventListener('click', requestUserLocation);
+
+/* ---------------- Building-to-building directions screen ---------------- */
+function populateDirectionsSelects(){
+  const from = document.getElementById('dir-from-select');
+  const to = document.getElementById('dir-to-select');
+  const options = BUILDINGS.filter(b=>b.lat!=null)
+    .map(b=>`<option value="${b.id}">${b.id}. ${b.name}</option>`).join('');
+  from.innerHTML = '<option value="">건물을 선택하세요</option>' + options;
+  to.innerHTML = '<option value="">건물을 선택하세요</option>' + options;
+}
+populateDirectionsSelects();
+
+async function updateDirectionsResult(){
+  const resultEl = document.getElementById('directions-result');
+  const fromId = document.getElementById('dir-from-select').value;
+  const toId = document.getElementById('dir-to-select').value;
+  if(!fromId || !toId){ resultEl.textContent = ''; return; }
+  if(fromId === toId){ resultEl.textContent = '서로 다른 두 건물을 선택해주세요.'; return; }
+  const a = BUILDINGS.find(x=>x.id===fromId);
+  const b = BUILDINGS.find(x=>x.id===toId);
+  resultEl.textContent = '실제 도보 경로를 확인하고 있어요...';
+  const result = await getWalkingRoute({lat:a.lat,lng:a.lng}, {lat:b.lat,lng:b.lng});
+  if(document.getElementById('dir-from-select').value !== fromId || document.getElementById('dir-to-select').value !== toId) return;
+  resultEl.textContent = `${a.name} → ${b.name}: ${formatRouteText(result)}`;
+}
+document.getElementById('dir-from-select').addEventListener('change', updateDirectionsResult);
+document.getElementById('dir-to-select').addEventListener('change', updateDirectionsResult);
 
 /* ---------------- View switching (tabs + programmatic navigation) ---------------- */
 let noticeScrollTop = 0;
