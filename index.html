@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -410,6 +410,20 @@
   }
   .map-pin.matched{ background:var(--gold); border-color:var(--ink); transform:scale(1.4); }
   .map-pin.selected{ background:var(--danger); border-color:#fff; transform:scale(1.5); box-shadow:0 0 0 1.5px rgba(255,255,255,0.9), 0 2px 8px rgba(0,0,0,0.5); }
+  .map-pin.user-loc{
+    background:#2f6fd6; border-color:#1c4a95; z-index:2;
+    box-shadow:0 0 0 5px rgba(47,111,214,0.22), 0 1px 3px rgba(0,0,0,0.35);
+    animation:userLocPulse 2.2s ease-in-out infinite;
+    pointer-events:none;
+  }
+  @keyframes userLocPulse{
+    0%,100%{ box-shadow:0 0 0 5px rgba(47,111,214,0.22), 0 1px 3px rgba(0,0,0,0.35); }
+    50%{ box-shadow:0 0 0 9px rgba(47,111,214,0.12), 0 1px 3px rgba(0,0,0,0.35); }
+  }
+  .map-locate-status{
+    font-size:11.5px; color:var(--ink-soft); text-align:center;
+    margin-top:6px; min-height:15px;
+  }
   .map-controls{
     position:absolute; top:8px; right:8px;
     display:flex; flex-direction:column; gap:4px;
@@ -553,6 +567,10 @@
   .bldg-info .name{font-size:15px;font-weight:600;}
   .bldg-info .sub{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
   .bldg-dist{font-size:13px;font-weight:700;color:var(--sage); text-align:right; min-width:56px;}
+  .bldg-dist-legend{
+    font-size:11.5px; color:var(--ink-soft); line-height:1.6;
+    margin:0 0 12px; text-align:left;
+  }
 
   .detail{
     position:relative;
@@ -989,6 +1007,7 @@
           </div>
         </div>
         <div class="map-controls">
+          <button id="map-locate-btn" aria-label="내 위치로 이동">📍</button>
           <button id="map-fullscreen-btn" aria-label="전체화면">⛶</button>
           <button id="zoom-in" aria-label="확대">+</button>
           <button id="zoom-out" aria-label="축소">−</button>
@@ -998,6 +1017,7 @@
         <div class="scale-row">
           <span>드래그로 이동 · 핀치 또는 버튼으로 확대/축소</span>
         </div>
+        <p class="map-locate-status" id="map-locate-status"></p>
       </div>
 
       <div class="map-popover" id="map-popover" hidden>
@@ -1053,6 +1073,7 @@
         <button class="detail-map-btn" id="detail-map-btn">🗺️ 지도에서 보기</button>
       </div>
 
+      <p class="bldg-dist-legend" id="bldg-dist-legend" hidden>≈ 표시는 직선거리 기준 추정치예요. 건물을 선택하면 실제 도보 경로 거리를 볼 수 있어요.</p>
       <div id="bldg-list"></div>
       <div class="empty-note" id="bldg-empty">건물을 탭하면 사진·정보·지도를 볼 수 있어요.</div>
     </section>
@@ -1255,95 +1276,95 @@ function closeNoticeModal(){
 const MAP_IMG_W = 1500, MAP_IMG_H = 1500;
 /* lat/lng이 있는 건물은 실측 GPS 기준 거리·방향 안내 가능, null인 건물은 지도 위치만 정확하고 GPS 거리는 준비중 */
 const BUILDINGS = [
-  {id:"1", name:"정문", sub:"캠퍼스 출입구", info:"원광대학교 캠퍼스의 정문이에요. 통학버스도 주로 이 문으로 드나들어요.", px:519, py:1306, lat:35.9667907, lng:126.9532425, illust:"gate"},
-  {id:"2", name:"서문", sub:"캠퍼스 출입구", info:"캠퍼스 서쪽 출입구예요.", px:174, py:961, lat:null, lng:null, illust:"gate"},
-  {id:"3", name:"남문", sub:"캠퍼스 출입구", info:"캠퍼스 남쪽 출입구로, 의과대학·병원 방면과 가까워요.", px:1134, py:1261, lat:35.96443, lng:126.9577, illust:"gate"},
-  {id:"4", name:"동문", sub:"캠퍼스 출입구", info:"캠퍼스 동쪽 출입구예요.", px:879, py:286, lat:35.9714668, lng:126.9643265, illust:"gate"},
-  {id:"5", name:"대운동장", sub:"육상트랙·축구장", info:"육상 트랙과 축구장을 갖춘 메인 운동장으로, 체육대회 등 각종 행사가 열려요.", px:726, py:481, lat:35.9703391, lng:126.9600979, illust:"stadium"},
-  {id:"6", name:"소운동장", sub:"보조 운동장", info:"가볍게 운동하거나 쉬어갈 수 있는 보조 운동장이에요.", px:666, py:706, lat:null, lng:null, illust:"stadium"},
-  {id:"7", name:"자연식물원", sub:"자연 식물원", info:"다양한 식물을 관찰할 수 있는 교내 식물원이에요.", px:972, py:301, lat:null, lng:null, illust:"museum"},
-  {id:"11", name:"산학협력2관", sub:"산학협력2관", info:"정확한 용도 정보는 준비 중이에요.", px:364, py:1156, lat:null, lng:null, illust:"office"},
-  {id:"12", name:"대학본관", sub:"행정·민원 업무", info:"학적·증명서 발급 등 학교 행정 업무를 처리하는 중심 행정관이에요.", px:324, py:1051, lat:35.9690386, lng:126.9537042, illust:"office"},
-  {id:"12-1", name:"본관물품보관소", sub:"교내 창고", info:"대학본관 옆에 있는 교내 창고예요.", px:288, py:1096, lat:null, lng:null, illust:"office"},
-  {id:"13", name:"생활과학관", sub:"평생능력개발원", info:"평생능력개발원이 있는 건물이에요.", px:210, py:916, lat:null, lng:null, illust:"humanities"},
-  {id:"14", name:"학생지원관", sub:"학생 상담·지원", info:"학생 상담, 취업 지원 등 학생 지원 업무를 담당하는 건물이에요.", px:375, py:931, lat:35.9697237, lng:126.9545952, illust:"office"},
-  {id:"14-1", name:"중앙도서관", sub:"자료실·열람실", info:"책과 학습 자료를 열람하고 공부할 수 있는 중앙도서관이에요.", px:366, py:796, lat:35.9702607, lng:126.9553666, illust:"library"},
-  {id:"15", name:"노천극장", sub:"노천극장", info:"야외 행사나 공연이 열리는 노천극장이에요.", px:549, py:1126, lat:null, lng:null, illust:"hall"},
-  {id:"16", name:"60주년기념관", sub:"WON웰니스센터", info:"개교 60주년을 기념해 지어진 건물로, WON웰니스센터가 있어요.", px:686, py:1291, lat:35.9658951, lng:126.9544319, illust:"hall"},
-  {id:"17", name:"숭산기념관", sub:"대학교당·교직원식당", info:"대학교당과 교직원 식당이 있는 건물이에요.", px:658, py:1186, lat:null, lng:null, illust:"hall"},
-  {id:"18", name:"원체육관", sub:"실내 체육시설", info:"농구·배구 등 실내 체육 수업과 행사가 열리는 체육관이에요.", px:519, py:1051, lat:35.968256, lng:126.9549874, illust:"sports"},
-  {id:"19", name:"스포츠과학관", sub:"스포츠과학관", info:"스포츠과학 관련 강의와 실습이 이뤄지는 건물이에요.", px:561, py:1021, lat:null, lng:null, illust:"sports"},
-  {id:"20", name:"교학관", sub:"교학관", info:"강의실과 교수 연구실이 있는 건물이에요.", px:289, py:751, lat:null, lng:null, illust:"humanities"},
-  {id:"21", name:"수덕호", sub:"봉황각", info:"캠퍼스 중심에 있는 연못으로, 봉황각과 함께 산책하기 좋아요.", px:490, py:826, lat:null, lng:null, illust:"museum"},
-  {id:"22", name:"공공정책관", sub:"공공정책관", info:"공공정책 관련 강의실이 있는 건물이에요.", px:570, py:871, lat:null, lng:null, illust:"humanities"},
-  {id:"22-1", name:"공공정책관별관", sub:"공공정책관별관", info:"공공정책관의 별관 건물이에요.", px:633, py:901, lat:null, lng:null, illust:"humanities"},
-  {id:"24", name:"학생회관", sub:"학생식당", info:"학생식당이 있어 끼니를 해결할 수 있는 건물이에요.", px:654, py:976, lat:35.9678671, lng:126.9560984, illust:"office"},
-  {id:"25", name:"원광디지털대학교", sub:"원광디지털대학교", info:"원광디지털대학교 관련 시설이 있는 건물이에요.", px:318, py:661, lat:null, lng:null, illust:"office"},
-  {id:"26", name:"법학전문대학원", sub:"법학전문대학원", info:"법학전문대학원 강의실과 연구실이 있는 건물이에요.", px:447, py:721, lat:35.9702972, lng:126.9563561, illust:"humanities"},
-  {id:"30", name:"용화관", sub:"학생생활관(기숙사)", info:"학생들이 생활하는 기숙사 건물이에요.", px:304, py:511, lat:35.9722, lng:126.9569593, illust:"student"},
-  {id:"31", name:"개벽관", sub:"학생생활관(기숙사)", info:"학생들이 생활하는 기숙사 건물이에요.", px:232, py:436, lat:35.9728325, lng:126.9571492, illust:"student"},
-  {id:"32", name:"삼학관", sub:"삼학관", info:"정확한 용도 정보는 준비 중이에요.", px:139, py:346, lat:null, lng:null, illust:"office"},
-  {id:"33", name:"삼동관", sub:"학생생활관(기숙사)", info:"학생들이 생활하는 기숙사 건물이에요.", px:289, py:481, lat:35.9682695, lng:126.9585945, illust:"student"},
-  {id:"34", name:"사은관", sub:"사은관", info:"학생 생활 관련 시설이 있는 건물이에요.", px:229, py:331, lat:null, lng:null, illust:"student"},
-  {id:"35", name:"보은관", sub:"보은관", info:"학생 생활 관련 시설이 있는 건물이에요.", px:349, py:391, lat:null, lng:null, illust:"student"},
-  {id:"36", name:"어학관", sub:"어학관", info:"외국어 강의와 어학 실습이 이뤄지는 건물이에요.", px:214, py:286, lat:null, lng:null, illust:"humanities"},
-  {id:"37", name:"청운관", sub:"청운관", info:"정확한 용도 정보는 준비 중이에요.", px:304, py:361, lat:null, lng:null, illust:"office"},
-  {id:"38", name:"익산글로벌교류센터", sub:"익산글로벌교류센터", info:"외국인 유학생 지원과 국제 교류 업무를 담당하는 곳이에요.", px:414, py:466, lat:null, lng:null, illust:"office"},
-  {id:"51", name:"사회관", sub:"사회관", info:"강의실과 교수 연구실이 있는 건물이에요.", px:379, py:571, lat:35.9713667, lng:126.957126, illust:"humanities"},
-  {id:"51-1", name:"제2사회관", sub:"제2사회관", info:"사회관의 별관 건물이에요.", px:454, py:496, lat:null, lng:null, illust:"humanities"},
-  {id:"51-2", name:"소방행정관", sub:"소방행정관", info:"소방행정학과 관련 강의실이 있는 건물이에요.", px:351, py:526, lat:null, lng:null, illust:"office"},
-  {id:"52", name:"미술관", sub:"미술관", info:"정확한 용도 정보는 준비 중이에요.", px:499, py:646, lat:null, lng:null, illust:"humanities"},
-  {id:"53", name:"경상관", sub:"경상관", info:"강의실과 교수 연구실이 있는 건물이에요.", px:454, py:556, lat:35.9709779, lng:126.9575982, illust:"humanities"},
-  {id:"53-1", name:"경상신관", sub:"경상신관", info:"경상관의 신관 건물이에요.", px:510, py:586, lat:null, lng:null, illust:"humanities"},
-  {id:"55", name:"학군단", sub:"학군단", info:"학군단(ROTC) 관련 시설이 있는 건물이에요.", px:469, py:391, lat:null, lng:null, illust:"office"},
-  {id:"56", name:"인문관", sub:"인문관", info:"국어국문학과 등 인문 계열 강의실이 있는 건물이에요.", px:529, py:436, lat:35.9712557, lng:126.9587092, illust:"humanities"},
-  {id:"57", name:"새천년관", sub:"새천년관", info:"각종 강의와 행사가 열리는 건물이에요.", px:579, py:526, lat:35.9705959, lng:126.9586772, illust:"hall"},
-  {id:"58", name:"물품보관창고", sub:"물품보관창고", info:"교내 물품을 보관하는 창고예요.", px:636, py:271, lat:null, lng:null, illust:"office"},
-  {id:"59", name:"공학관", sub:"공학관", info:"공학 계열 강의실과 실습실이 있는 건물이에요.", px:799, py:826, lat:35.9678672, lng:126.9581537, illust:"engineering"},
-  {id:"59-1", name:"공학교육혁신관", sub:"공학교육혁신관", info:"정확한 용도 정보는 준비 중이에요.", px:888, py:601, lat:null, lng:null, illust:"engineering"},
-  {id:"59-2", name:"글로벌창업지원관", sub:"글로벌창업지원관", info:"정확한 용도 정보는 준비 중이에요.", px:923, py:661, lat:null, lng:null, illust:"engineering"},
-  {id:"59-3", name:"자동차공학실습관", sub:"자동차공학실습관", info:"자동차공학 관련 실습이 이뤄지는 건물이에요.", px:1013, py:631, lat:null, lng:null, illust:"engineering"},
-  {id:"60", name:"박물관", sub:"대학 박물관·전시", info:"학교와 지역의 역사, 유물을 전시하는 박물관이에요.", px:859, py:1081, lat:35.9662562, lng:126.9567373, illust:"museum"},
-  {id:"61", name:"도예관", sub:"도예관", info:"도예 실습이 이뤄지는 건물이에요.", px:544, py:316, lat:null, lng:null, illust:"engineering"},
-  {id:"62", name:"반려산업1관", sub:"반려산업1관", info:"정확한 용도 정보는 준비 중이에요.", px:619, py:346, lat:null, lng:null, illust:"engineering"},
-  {id:"62-1", name:"조소별관", sub:"조소별관", info:"조소 실습이 이뤄지는 건물이에요.", px:630, py:301, lat:null, lng:null, illust:"engineering"},
-  {id:"63", name:"자연과학관", sub:"자연과학관", info:"자연과학 계열 강의실과 실습실이 있는 건물이에요.", px:900, py:721, lat:35.9677005, lng:126.9592925, illust:"medical"},
-  {id:"64", name:"승리관", sub:"승리관", info:"체육 관련 시설이 있는 건물이에요.", px:724, py:286, lat:null, lng:null, illust:"office"},
-  {id:"65", name:"문화체육관", sub:"대형 체육·행사시설", info:"각종 체육 행사와 큰 모임이 열리는 대형 체육시설이에요.", px:1005, py:1156, lat:35.9652510, lng:126.9573320, illust:"sports"},
-  {id:"65-1", name:"문화체육관 별관", sub:"문화체육관 별관", info:"문화체육관의 별관 건물이에요.", px:980, py:1066, lat:null, lng:null, illust:"sports"},
-  {id:"66", name:"생명자원과학관", sub:"생명자원과학관", info:"생명자원과학 계열 강의실과 실습실이 있는 건물이에요.", px:912, py:511, lat:null, lng:null, illust:"engineering"},
-  {id:"67", name:"무빙테크노관", sub:"창업보육센터", info:"창업보육센터가 있어 학생 창업을 지원하는 건물이에요.", px:846, py:346, lat:null, lng:null, illust:"office"},
-  {id:"68", name:"약학관", sub:"약학관", info:"약학 계열 강의실과 실습실이 있는 건물이에요.", px:1009, py:796, lat:35.9669229, lng:126.9595981, illust:"pharmacy"},
-  {id:"69", name:"의학관", sub:"의학관", info:"의학 계열 강의실과 실습실이 있는 건물이에요.", px:1099, py:931, lat:35.9657047, lng:126.9590814, illust:"medical"},
-  {id:"69-1", name:"제생의세관", sub:"제생의세관", info:"정확한 용도 정보는 준비 중이에요.", px:1086, py:856, lat:null, lng:null, illust:"medical"},
-  {id:"69-2", name:"산학협력1관", sub:"산학협력1관", info:"산학협력 관련 연구와 사업이 이뤄지는 건물이에요.", px:1015, py:901, lat:null, lng:null, illust:"office"},
-  {id:"70", name:"한의전문관", sub:"한의전문관", info:"한의학전문대학원 강의실과 연구실이 있는 건물이에요.", px:1080, py:1021, lat:35.9652841, lng:126.9586815, illust:"medical"},
-  {id:"71", name:"한의관", sub:"한의관", info:"한의학 계열 강의실과 실습실이 있는 건물이에요.", px:1114, py:1066, lat:null, lng:null, illust:"medical"},
-  {id:"72", name:"사범관", sub:"사범관", info:"강의실과 교수 연구실이 있는 건물이에요.", px:1069, py:661, lat:35.9673117, lng:126.9608757, illust:"humanities"},
-  {id:"72-1", name:"사범대학 부속유치원", sub:"부속유치원", info:"사범대학이 운영하는 부속 유치원이에요.", px:1186, py:601, lat:null, lng:null, illust:"humanities"},
-  {id:"73", name:"간호과학관", sub:"간호과학관", info:"간호 계열 강의실과 실습실이 있는 건물이에요.", px:1155, py:691, lat:null, lng:null, illust:"medical"},
-  {id:"74", name:"치의관", sub:"치의학과", info:"치의학 계열 강의실과 실습실이 있는 건물이에요.", px:1264, py:901, lat:35.9650573, lng:126.9606074, illust:"medical"},
-  {id:"74-1", name:"제2치학관", sub:"제2치학관", info:"치의학과의 제2 강의동이에요.", px:1384, py:856, lat:null, lng:null, illust:"medical"},
-  {id:"80", name:"원광문화복지센터", sub:"원광문화복지센터", info:"각종 문화 행사와 모임이 열리는 공간이에요.", px:1158, py:1201, lat:null, lng:null, illust:"hall"},
-  {id:"81", name:"원광대학교 한방병원", sub:"한방병원", info:"한방 진료를 받을 수 있는 원광대학교 한방병원이에요.", px:1150, py:1111, lat:null, lng:null, illust:"medical"},
-  {id:"82", name:"원광대학교병원", sub:"대학병원", info:"종합 진료를 받을 수 있는 원광대학교병원이에요.", px:1257, py:1021, lat:35.9647966, lng:126.9608518, illust:"medical"},
-  {id:"83", name:"원광대학교 치과병원", sub:"치과병원", info:"치과 진료를 받을 수 있는 원광대학교 치과병원이에요.", px:1390, py:901, lat:null, lng:null, illust:"medical"},
-  {id:"84", name:"원광대학교병원 응급의료센터", sub:"제2의학관", info:"응급 환자를 진료하는 응급의료센터예요.", px:1198, py:826, lat:null, lng:null, illust:"medical"},
-  {id:"85", name:"원광대학교병원 장례문화원", sub:"장례문화원", info:"장례 절차를 지원하는 장례문화원이에요.", px:1363, py:796, lat:null, lng:null, illust:"hall"},
-  {id:"86", name:"프라임관", sub:"컨퍼런스홀 외", info:"컨퍼런스홀 등 각종 행사가 열리는 건물이에요.", px:729, py:751, lat:35.9684744, lng:126.9579818, illust:"office"},
-  {id:"101", name:"유일학림관", sub:"유일학림관", info:"정확한 용도 정보는 준비 중이에요.", px:139, py:841, lat:null, lng:null, illust:"office"},
-  {id:"102", name:"WM관", sub:"WM관", info:"정확한 용도 정보는 준비 중이에요.", px:276, py:841, lat:null, lng:null, illust:"office"},
-  {id:"103", name:"보건도서관", sub:"보건계열 도서관", info:"정확한 용도 정보는 준비 중이에요.", px:244, py:796, lat:null, lng:null, illust:"library"},
-  {id:"104", name:"미래관", sub:"미래관", info:"정확한 용도 정보는 준비 중이에요.", px:187, py:766, lat:null, lng:null, illust:"office"},
-  {id:"105", name:"학생성공관", sub:"학생성공관", info:"정확한 용도 정보는 준비 중이에요.", px:79, py:736, lat:null, lng:null, illust:"office"},
-  {id:"106", name:"멀티미디어센터", sub:"멀티미디어센터", info:"정확한 용도 정보는 준비 중이에요.", px:60, py:676, lat:null, lng:null, illust:"office"},
-  {id:"107", name:"보건관", sub:"보건관", info:"정확한 용도 정보는 준비 중이에요.", px:187, py:616, lat:null, lng:null, illust:"medical"},
-  {id:"108", name:"문화관", sub:"문화관", info:"정확한 용도 정보는 준비 중이에요.", px:262, py:579, lat:null, lng:null, illust:"hall"},
-  {id:"109", name:"행복기숙사", sub:"학생생활관(기숙사)", info:"학생들이 생활하는 기숙사 건물이에요.", px:80, py:586, lat:null, lng:null, illust:"student"},
-  {id:"110", name:"학림관", sub:"학림관", info:"정확한 용도 정보는 준비 중이에요.", px:157, py:496, lat:35.9726999, lng:126.9561816, illust:"office"},
-  {id:"111", name:"정진관", sub:"정진관", info:"정확한 용도 정보는 준비 중이에요.", px:367, py:631, lat:null, lng:null, illust:"office"},
-  {id:"112", name:"창업관", sub:"창업관", info:"정확한 용도 정보는 준비 중이에요.", px:337, py:601, lat:null, lng:null, illust:"office"},
-  {id:"113", name:"예능관", sub:"예능관", info:"정확한 용도 정보는 준비 중이에요.", px:262, py:541, lat:null, lng:null, illust:"hall"},
+  {id:"1", name:"정문", sub:"캠퍼스 출입구", info:"원광대학교 캠퍼스의 정문이에요. 통학버스도 주로 이 문으로 드나들어요.", px:519, py:1306, lat:35.9667907, lng:126.9532425, illust:"gate", rooms:null},
+  {id:"2", name:"서문", sub:"캠퍼스 출입구", info:"캠퍼스 서쪽 출입구예요.", px:174, py:961, lat:null, lng:null, illust:"gate", rooms:null},
+  {id:"3", name:"남문", sub:"캠퍼스 출입구", info:"캠퍼스 남쪽 출입구로, 의과대학·병원 방면과 가까워요.", px:1134, py:1261, lat:35.96443, lng:126.9577, illust:"gate", rooms:null},
+  {id:"4", name:"동문", sub:"캠퍼스 출입구", info:"캠퍼스 동쪽 출입구예요.", px:879, py:286, lat:35.9714668, lng:126.9643265, illust:"gate", rooms:null},
+  {id:"5", name:"대운동장", sub:"육상트랙·축구장", info:"육상 트랙과 축구장을 갖춘 메인 운동장으로, 체육대회 등 각종 행사가 열려요.", px:726, py:481, lat:35.9703391, lng:126.9600979, illust:"stadium", rooms:null},
+  {id:"6", name:"소운동장", sub:"보조 운동장", info:"가볍게 운동하거나 쉬어갈 수 있는 보조 운동장이에요.", px:666, py:706, lat:null, lng:null, illust:"stadium", rooms:null},
+  {id:"7", name:"자연식물원", sub:"자연 식물원", info:"다양한 식물을 관찰할 수 있는 교내 식물원이에요.", px:972, py:301, lat:null, lng:null, illust:"museum", rooms:null},
+  {id:"11", name:"산학협력2관", sub:"산학협력2관", info:"정확한 용도 정보는 준비 중이에요.", px:364, py:1156, lat:null, lng:null, illust:"office", rooms:null},
+  {id:"12", name:"대학본관", sub:"행정·민원 업무", info:"학적·증명서 발급 등 학교 행정 업무를 처리하는 중심 행정관이에요.", px:324, py:1051, lat:35.9690386, lng:126.9537042, illust:"office", rooms:null},
+  {id:"12-1", name:"본관물품보관소", sub:"교내 창고", info:"대학본관 옆에 있는 교내 창고예요.", px:288, py:1096, lat:null, lng:null, illust:"office", rooms:null},
+  {id:"13", name:"생활과학관", sub:"평생능력개발원", info:"평생능력개발원이 있는 건물이에요.", px:210, py:916, lat:null, lng:null, illust:"humanities", rooms:null},
+  {id:"14", name:"학생지원관", sub:"학생 상담·지원", info:"학생 상담, 취업 지원 등 학생 지원 업무를 담당하는 건물이에요.", px:375, py:931, lat:35.9697237, lng:126.9545952, illust:"office", rooms:null},
+  {id:"14-1", name:"중앙도서관", sub:"자료실·열람실", info:"책과 학습 자료를 열람하고 공부할 수 있는 중앙도서관이에요.", px:366, py:796, lat:35.9702607, lng:126.9553666, illust:"library", rooms:null},
+  {id:"15", name:"노천극장", sub:"노천극장", info:"야외 행사나 공연이 열리는 노천극장이에요.", px:549, py:1126, lat:null, lng:null, illust:"hall", rooms:null},
+  {id:"16", name:"60주년기념관", sub:"WON웰니스센터", info:"개교 60주년을 기념해 지어진 건물로, WON웰니스센터가 있어요.", px:686, py:1291, lat:35.9658951, lng:126.9544319, illust:"hall", rooms:null},
+  {id:"17", name:"숭산기념관", sub:"대학교당·교직원식당", info:"대학교당과 교직원 식당이 있는 건물이에요.", px:658, py:1186, lat:null, lng:null, illust:"hall", rooms:null},
+  {id:"18", name:"원체육관", sub:"실내 체육시설", info:"농구·배구 등 실내 체육 수업과 행사가 열리는 체육관이에요.", px:519, py:1051, lat:35.968256, lng:126.9549874, illust:"sports", rooms:null},
+  {id:"19", name:"스포츠과학관", sub:"스포츠과학관", info:"스포츠과학 관련 강의와 실습이 이뤄지는 건물이에요.", px:561, py:1021, lat:null, lng:null, illust:"sports", rooms:null},
+  {id:"20", name:"교학관", sub:"교학관", info:"강의실과 교수 연구실이 있는 건물이에요.", px:289, py:751, lat:null, lng:null, illust:"humanities", rooms:null},
+  {id:"21", name:"수덕호", sub:"봉황각", info:"캠퍼스 중심에 있는 연못으로, 봉황각과 함께 산책하기 좋아요.", px:490, py:826, lat:null, lng:null, illust:"museum", rooms:null},
+  {id:"22", name:"공공정책관", sub:"공공정책관", info:"공공정책 관련 강의실이 있는 건물이에요.", px:570, py:871, lat:null, lng:null, illust:"humanities", rooms:null},
+  {id:"22-1", name:"공공정책관별관", sub:"공공정책관별관", info:"공공정책관의 별관 건물이에요.", px:633, py:901, lat:null, lng:null, illust:"humanities", rooms:null},
+  {id:"24", name:"학생회관", sub:"학생식당", info:"학생식당이 있어 끼니를 해결할 수 있는 건물이에요.", px:654, py:976, lat:35.9678671, lng:126.9560984, illust:"office", rooms:null},
+  {id:"25", name:"원광디지털대학교", sub:"원광디지털대학교", info:"원광디지털대학교 관련 시설이 있는 건물이에요.", px:318, py:661, lat:null, lng:null, illust:"office", rooms:null},
+  {id:"26", name:"법학전문대학원", sub:"법학전문대학원", info:"법학전문대학원 강의실과 연구실이 있는 건물이에요.", px:447, py:721, lat:35.9702972, lng:126.9563561, illust:"humanities", rooms:null},
+  {id:"30", name:"용화관", sub:"학생생활관(기숙사)", info:"학생들이 생활하는 기숙사 건물이에요.", px:304, py:511, lat:35.9722, lng:126.9569593, illust:"student", rooms:null},
+  {id:"31", name:"개벽관", sub:"학생생활관(기숙사)", info:"학생들이 생활하는 기숙사 건물이에요.", px:232, py:436, lat:35.9728325, lng:126.9571492, illust:"student", rooms:null},
+  {id:"32", name:"삼학관", sub:"삼학관", info:"정확한 용도 정보는 준비 중이에요.", px:139, py:346, lat:null, lng:null, illust:"office", rooms:null},
+  {id:"33", name:"삼동관", sub:"학생생활관(기숙사)", info:"학생들이 생활하는 기숙사 건물이에요.", px:289, py:481, lat:35.9682695, lng:126.9585945, illust:"student", rooms:null},
+  {id:"34", name:"사은관", sub:"사은관", info:"학생 생활 관련 시설이 있는 건물이에요.", px:229, py:331, lat:null, lng:null, illust:"student", rooms:null},
+  {id:"35", name:"보은관", sub:"보은관", info:"학생 생활 관련 시설이 있는 건물이에요.", px:349, py:391, lat:null, lng:null, illust:"student", rooms:null},
+  {id:"36", name:"어학관", sub:"어학관", info:"외국어 강의와 어학 실습이 이뤄지는 건물이에요.", px:214, py:286, lat:null, lng:null, illust:"humanities", rooms:null},
+  {id:"37", name:"청운관", sub:"청운관", info:"정확한 용도 정보는 준비 중이에요.", px:304, py:361, lat:null, lng:null, illust:"office", rooms:null},
+  {id:"38", name:"익산글로벌교류센터", sub:"익산글로벌교류센터", info:"외국인 유학생 지원과 국제 교류 업무를 담당하는 곳이에요.", px:414, py:466, lat:null, lng:null, illust:"office", rooms:null},
+  {id:"51", name:"사회관", sub:"사회관", info:"강의실과 교수 연구실이 있는 건물이에요.", px:379, py:571, lat:35.9713667, lng:126.957126, illust:"humanities", rooms:null},
+  {id:"51-1", name:"제2사회관", sub:"제2사회관", info:"사회관의 별관 건물이에요.", px:454, py:496, lat:null, lng:null, illust:"humanities", rooms:null},
+  {id:"51-2", name:"소방행정관", sub:"소방행정관", info:"소방행정학과 관련 강의실이 있는 건물이에요.", px:351, py:526, lat:null, lng:null, illust:"office", rooms:null},
+  {id:"52", name:"미술관", sub:"미술관", info:"정확한 용도 정보는 준비 중이에요.", px:499, py:646, lat:null, lng:null, illust:"humanities", rooms:null},
+  {id:"53", name:"경상관", sub:"경상관", info:"강의실과 교수 연구실이 있는 건물이에요.", px:454, py:556, lat:35.9709779, lng:126.9575982, illust:"humanities", rooms:null},
+  {id:"53-1", name:"경상신관", sub:"경상신관", info:"경상관의 신관 건물이에요.", px:510, py:586, lat:null, lng:null, illust:"humanities", rooms:null},
+  {id:"55", name:"학군단", sub:"학군단", info:"학군단(ROTC) 관련 시설이 있는 건물이에요.", px:469, py:391, lat:null, lng:null, illust:"office", rooms:null},
+  {id:"56", name:"인문관", sub:"인문관", info:"국어국문학과 등 인문 계열 강의실이 있는 건물이에요.", px:529, py:436, lat:35.9712557, lng:126.9587092, illust:"humanities", rooms:null},
+  {id:"57", name:"새천년관", sub:"새천년관", info:"각종 강의와 행사가 열리는 건물이에요.", px:579, py:526, lat:35.9705959, lng:126.9586772, illust:"hall", rooms:null},
+  {id:"58", name:"물품보관창고", sub:"물품보관창고", info:"교내 물품을 보관하는 창고예요.", px:636, py:271, lat:null, lng:null, illust:"office", rooms:null},
+  {id:"59", name:"공학관", sub:"공학관", info:"공학 계열 강의실과 실습실이 있는 건물이에요.", px:799, py:826, lat:35.9678672, lng:126.9581537, illust:"engineering", rooms:null},
+  {id:"59-1", name:"공학교육혁신관", sub:"공학교육혁신관", info:"정확한 용도 정보는 준비 중이에요.", px:888, py:601, lat:null, lng:null, illust:"engineering", rooms:null},
+  {id:"59-2", name:"글로벌창업지원관", sub:"글로벌창업지원관", info:"정확한 용도 정보는 준비 중이에요.", px:923, py:661, lat:null, lng:null, illust:"engineering", rooms:null},
+  {id:"59-3", name:"자동차공학실습관", sub:"자동차공학실습관", info:"자동차공학 관련 실습이 이뤄지는 건물이에요.", px:1013, py:631, lat:null, lng:null, illust:"engineering", rooms:null},
+  {id:"60", name:"박물관", sub:"대학 박물관·전시", info:"학교와 지역의 역사, 유물을 전시하는 박물관이에요.", px:859, py:1081, lat:35.9662562, lng:126.9567373, illust:"museum", rooms:null},
+  {id:"61", name:"도예관", sub:"도예관", info:"도예 실습이 이뤄지는 건물이에요.", px:544, py:316, lat:null, lng:null, illust:"engineering", rooms:null},
+  {id:"62", name:"반려산업1관", sub:"반려산업1관", info:"정확한 용도 정보는 준비 중이에요.", px:619, py:346, lat:null, lng:null, illust:"engineering", rooms:null},
+  {id:"62-1", name:"조소별관", sub:"조소별관", info:"조소 실습이 이뤄지는 건물이에요.", px:630, py:301, lat:null, lng:null, illust:"engineering", rooms:null},
+  {id:"63", name:"자연과학관", sub:"자연과학관", info:"자연과학 계열 강의실과 실습실이 있는 건물이에요.", px:900, py:721, lat:35.9677005, lng:126.9592925, illust:"medical", rooms:null},
+  {id:"64", name:"승리관", sub:"승리관", info:"체육 관련 시설이 있는 건물이에요.", px:724, py:286, lat:null, lng:null, illust:"office", rooms:null},
+  {id:"65", name:"문화체육관", sub:"대형 체육·행사시설", info:"각종 체육 행사와 큰 모임이 열리는 대형 체육시설이에요.", px:1005, py:1156, lat:35.9652510, lng:126.9573320, illust:"sports", rooms:null},
+  {id:"65-1", name:"문화체육관 별관", sub:"문화체육관 별관", info:"문화체육관의 별관 건물이에요.", px:980, py:1066, lat:null, lng:null, illust:"sports", rooms:null},
+  {id:"66", name:"생명자원과학관", sub:"생명자원과학관", info:"생명자원과학 계열 강의실과 실습실이 있는 건물이에요.", px:912, py:511, lat:null, lng:null, illust:"engineering", rooms:null},
+  {id:"67", name:"무빙테크노관", sub:"창업보육센터", info:"창업보육센터가 있어 학생 창업을 지원하는 건물이에요.", px:846, py:346, lat:null, lng:null, illust:"office", rooms:null},
+  {id:"68", name:"약학관", sub:"약학관", info:"약학 계열 강의실과 실습실이 있는 건물이에요.", px:1009, py:796, lat:35.9669229, lng:126.9595981, illust:"pharmacy", rooms:null},
+  {id:"69", name:"의학관", sub:"의학관", info:"의학 계열 강의실과 실습실이 있는 건물이에요.", px:1099, py:931, lat:35.9657047, lng:126.9590814, illust:"medical", rooms:null},
+  {id:"69-1", name:"제생의세관", sub:"제생의세관", info:"정확한 용도 정보는 준비 중이에요.", px:1086, py:856, lat:null, lng:null, illust:"medical", rooms:null},
+  {id:"69-2", name:"산학협력1관", sub:"산학협력1관", info:"산학협력 관련 연구와 사업이 이뤄지는 건물이에요.", px:1015, py:901, lat:null, lng:null, illust:"office", rooms:null},
+  {id:"70", name:"한의전문관", sub:"한의전문관", info:"한의학전문대학원 강의실과 연구실이 있는 건물이에요.", px:1080, py:1021, lat:35.9652841, lng:126.9586815, illust:"medical", rooms:null},
+  {id:"71", name:"한의관", sub:"한의관", info:"한의학 계열 강의실과 실습실이 있는 건물이에요.", px:1114, py:1066, lat:null, lng:null, illust:"medical", rooms:null},
+  {id:"72", name:"사범관", sub:"사범관", info:"강의실과 교수 연구실이 있는 건물이에요.", px:1069, py:661, lat:35.9673117, lng:126.9608757, illust:"humanities", rooms:null},
+  {id:"72-1", name:"사범대학 부속유치원", sub:"부속유치원", info:"사범대학이 운영하는 부속 유치원이에요.", px:1186, py:601, lat:null, lng:null, illust:"humanities", rooms:null},
+  {id:"73", name:"간호과학관", sub:"간호과학관", info:"간호 계열 강의실과 실습실이 있는 건물이에요.", px:1155, py:691, lat:null, lng:null, illust:"medical", rooms:null},
+  {id:"74", name:"치의관", sub:"치의학과", info:"치의학 계열 강의실과 실습실이 있는 건물이에요.", px:1264, py:901, lat:35.9650573, lng:126.9606074, illust:"medical", rooms:null},
+  {id:"74-1", name:"제2치학관", sub:"제2치학관", info:"치의학과의 제2 강의동이에요.", px:1384, py:856, lat:null, lng:null, illust:"medical", rooms:null},
+  {id:"80", name:"원광문화복지센터", sub:"원광문화복지센터", info:"각종 문화 행사와 모임이 열리는 공간이에요.", px:1158, py:1201, lat:null, lng:null, illust:"hall", rooms:null},
+  {id:"81", name:"원광대학교 한방병원", sub:"한방병원", info:"한방 진료를 받을 수 있는 원광대학교 한방병원이에요.", px:1150, py:1111, lat:null, lng:null, illust:"medical", rooms:null},
+  {id:"82", name:"원광대학교병원", sub:"대학병원", info:"종합 진료를 받을 수 있는 원광대학교병원이에요.", px:1257, py:1021, lat:35.9647966, lng:126.9608518, illust:"medical", rooms:null},
+  {id:"83", name:"원광대학교 치과병원", sub:"치과병원", info:"치과 진료를 받을 수 있는 원광대학교 치과병원이에요.", px:1390, py:901, lat:null, lng:null, illust:"medical", rooms:null},
+  {id:"84", name:"원광대학교병원 응급의료센터", sub:"제2의학관", info:"응급 환자를 진료하는 응급의료센터예요.", px:1198, py:826, lat:null, lng:null, illust:"medical", rooms:null},
+  {id:"85", name:"원광대학교병원 장례문화원", sub:"장례문화원", info:"장례 절차를 지원하는 장례문화원이에요.", px:1363, py:796, lat:null, lng:null, illust:"hall", rooms:null},
+  {id:"86", name:"프라임관", sub:"컨퍼런스홀 외", info:"컨퍼런스홀 등 각종 행사가 열리는 건물이에요.", px:729, py:751, lat:35.9684744, lng:126.9579818, illust:"office", rooms:null},
+  {id:"101", name:"유일학림관", sub:"유일학림관", info:"정확한 용도 정보는 준비 중이에요.", px:139, py:841, lat:null, lng:null, illust:"office", rooms:null},
+  {id:"102", name:"WM관", sub:"WM관", info:"정확한 용도 정보는 준비 중이에요.", px:276, py:841, lat:null, lng:null, illust:"office", rooms:null},
+  {id:"103", name:"보건도서관", sub:"보건계열 도서관", info:"정확한 용도 정보는 준비 중이에요.", px:244, py:796, lat:null, lng:null, illust:"library", rooms:null},
+  {id:"104", name:"미래관", sub:"미래관", info:"정확한 용도 정보는 준비 중이에요.", px:187, py:766, lat:null, lng:null, illust:"office", rooms:null},
+  {id:"105", name:"학생성공관", sub:"학생성공관", info:"정확한 용도 정보는 준비 중이에요.", px:79, py:736, lat:null, lng:null, illust:"office", rooms:null},
+  {id:"106", name:"멀티미디어센터", sub:"멀티미디어센터", info:"정확한 용도 정보는 준비 중이에요.", px:60, py:676, lat:null, lng:null, illust:"office", rooms:null},
+  {id:"107", name:"보건관", sub:"보건관", info:"정확한 용도 정보는 준비 중이에요.", px:187, py:616, lat:null, lng:null, illust:"medical", rooms:null},
+  {id:"108", name:"문화관", sub:"문화관", info:"정확한 용도 정보는 준비 중이에요.", px:262, py:579, lat:null, lng:null, illust:"hall", rooms:null},
+  {id:"109", name:"행복기숙사", sub:"학생생활관(기숙사)", info:"학생들이 생활하는 기숙사 건물이에요.", px:80, py:586, lat:null, lng:null, illust:"student", rooms:null},
+  {id:"110", name:"학림관", sub:"학림관", info:"정확한 용도 정보는 준비 중이에요.", px:157, py:496, lat:35.9726999, lng:126.9561816, illust:"office", rooms:null},
+  {id:"111", name:"정진관", sub:"정진관", info:"정확한 용도 정보는 준비 중이에요.", px:367, py:631, lat:null, lng:null, illust:"office", rooms:null},
+  {id:"112", name:"창업관", sub:"창업관", info:"정확한 용도 정보는 준비 중이에요.", px:337, py:601, lat:null, lng:null, illust:"office", rooms:null},
+  {id:"113", name:"예능관", sub:"예능관", info:"정확한 용도 정보는 준비 중이에요.", px:262, py:541, lat:null, lng:null, illust:"hall", rooms:null},
 ];
 
 /* 원광대학교 공식 캠퍼스맵 페이지(wku.ac.kr)에 게재된 건물 사진. 실제 존재하지 않는 사진을 만들지 않기 위해
@@ -1616,9 +1637,20 @@ function highlightMatch(text, q){
   return text.slice(0,idx) + `<span class="hl-match">${text.slice(idx, idx+q.length)}</span>` + text.slice(idx+q.length);
 }
 
+function looksLikeRoomQuery(q){
+  // 강의실 번호처럼 보이는 검색어(예: 401, 401호, B101)인지 판별한다.
+  // 순수 3~4자리 숫자는 건물번호(대부분 1~3자리)와 겹치지 않으므로 강의실 검색 의도로 본다.
+  const t = q.trim();
+  if(!t) return false;
+  if(/[a-z]/i.test(t) && /\d/.test(t) && t.length <= 8) return true; // B101 같은 형태
+  if(/^\d{3,4}\s*호?$/.test(t)) return true; // 401, 401호
+  return false;
+}
+
 function renderBuildings(){
   const list = document.getElementById('bldg-list');
   const emptyNote = document.getElementById('bldg-empty');
+  const legend = document.getElementById('bldg-dist-legend');
   const q = bldgQuery.trim().toLowerCase();
   const filtered = BUILDINGS.filter(b => !q
     || b.name.toLowerCase().includes(q)
@@ -1627,20 +1659,21 @@ function renderBuildings(){
 
   if(filtered.length === 0){
     list.innerHTML = '';
-    // 강의실 코드처럼 보이는 검색어(예: B101)인지 대략 판별해서 안내를 다르게 보여준다
-    const looksLikeRoomCode = /[a-z]/i.test(q) && /\d/.test(q) && q.length <= 8;
-    emptyNote.textContent = looksLikeRoomCode
-      ? '강의실 검색은 아직 준비 중이에요. 건물명이나 건물번호로 검색해보세요.'
+    legend.hidden = true;
+    // 실제 건물과 매칭되는 게 없을 때만 강의실 검색 의도인지 판별해서 안내한다
+    emptyNote.textContent = looksLikeRoomQuery(bldgQuery)
+      ? `강의실 번호(${bldgQuery.trim()})로 검색하신 것 같아요. 강의실 상세 검색은 아직 준비 중이에요. 건물명이나 건물번호로 검색해보세요.`
       : `'${bldgQuery.trim()}'와 일치하는 건물이 없어요. 건물명이나 건물번호를 다시 확인해주세요.`;
     return;
   }
   emptyNote.textContent = "건물을 탭하면 사진·정보·지도를 볼 수 있어요.";
+  legend.hidden = !(userPos && filtered.some(b=>b.lat!=null));
 
   list.innerHTML = filtered.map(b=>{
     let distTxt = "--";
     if(userPos && b.lat!=null){
       const d = haversine(userPos.lat,userPos.lng,b.lat,b.lng);
-      distTxt = d<1000 ? `${Math.round(d)}m` : `${(d/1000).toFixed(1)}km`;
+      distTxt = d<1000 ? `≈${Math.round(d)}m` : `≈${(d/1000).toFixed(1)}km`;
     }
     return `
       <div class="bldg-row ${selectedBuilding===b.id?'selected':''}" data-id="${b.id}">
@@ -1811,13 +1844,23 @@ function renderMap(){
   const pinsWrap = document.getElementById('map-pins');
   const q = bldgQuery.trim();
 
-  pinsWrap.innerHTML = BUILDINGS.filter(b=>b.px!=null && b.py!=null).map(b=>{
+  let html = BUILDINGS.filter(b=>b.px!=null && b.py!=null).map(b=>{
     const sel = b.id===selectedBuilding;
     const matched = q && (b.name.includes(q) || b.id.includes(q) || b.sub.includes(q));
     const leftPct = (b.px/MAP_IMG_W*100).toFixed(2);
     const topPct = (b.py/MAP_IMG_H*100).toFixed(2);
     return `<div class="map-pin ${sel?'selected':''} ${matched?'matched':''}" data-id="${b.id}" style="left:${leftPct}%; top:${topPct}%;" title="${b.id}. ${b.name}"></div>`;
   }).join('');
+
+  if(userPos){
+    // 건물 핀과 같은 geoToPixel 변환·퍼센트 배치 방식을 그대로 재사용해서 내 위치를 표시한다
+    const p = geoToPixel(userPos.lat, userPos.lng);
+    const leftPct = (p.px/MAP_IMG_W*100).toFixed(2);
+    const topPct = (p.py/MAP_IMG_H*100).toFixed(2);
+    html += `<div class="map-pin user-loc" style="left:${leftPct}%; top:${topPct}%;" title="현재 위치(추정)"></div>`;
+  }
+
+  pinsWrap.innerHTML = html;
 
   /* 핀 탭 처리는 map-img-wrap의 pointerup 핸들러(드래그와 탭을 구분)에서 일괄 처리한다.
      wrap이 pointerdown마다 포인터를 캡처하기 때문에 핀 자체의 click 이벤트는 신뢰할 수 없어서
@@ -1936,6 +1979,18 @@ function applyMapTransform(){
   inner.style.transform = `translate(${mapPanX}px,${mapPanY}px) scale(${mapZoom})`;
 }
 
+/* 기존 pan/zoom 상태(mapPanX/mapPanY/mapZoom)를 재사용해서 특정 픽셀 좌표(내 위치)가
+   화면 중앙에 오도록 지도를 이동시킨다. "현재 위치로 이동" 버튼에서 사용. */
+function centerMapOnPixel(px, py){
+  const wrap = document.getElementById('map-img-wrap');
+  if(!wrap || !wrap.clientWidth) return;
+  if(mapZoom < 1.5) mapZoom = 1.5;
+  const leftFrac = px/MAP_IMG_W, topFrac = py/MAP_IMG_H;
+  mapPanX = -(wrap.clientWidth * (leftFrac-0.5) * mapZoom);
+  mapPanY = -(wrap.clientHeight * (topFrac-0.5) * mapZoom);
+  applyMapTransform();
+}
+
 (function setupMapPanZoom(){
   const wrap = document.getElementById('map-img-wrap');
   const activePointers = new Map();
@@ -2027,9 +2082,11 @@ function applyMapTransform(){
 function requestUserLocation(){
   const homeStatus = document.getElementById('home-locate-status');
   const distText = document.getElementById('detail-dist-text');
+  const mapStatus = document.getElementById('map-locate-status');
   const setStatus = (msg)=>{
     if(homeStatus) homeStatus.textContent = msg;
     if(distText && selectedBuilding != null) distText.textContent = msg;
+    if(mapStatus) mapStatus.textContent = msg;
   };
   if(!navigator.geolocation){
     setStatus('이 브라우저는 위치 확인을 지원하지 않아요.');
@@ -2044,7 +2101,11 @@ function requestUserLocation(){
       setStatus(`현재 위치 확인 완료 (오차 약 ${acc}m)${accNote}`);
       renderBuildings();
       updateDetail();
-      renderMap();
+      renderMap(); // userPos가 채워졌으니 지도 위 내 위치 마커도 다시 그려진다
+      if(currentView === 'map'){
+        const p = geoToPixel(userPos.lat, userPos.lng);
+        centerMapOnPixel(p.px, p.py);
+      }
     },
     err=>{
       setStatus('현재 위치를 확인할 수 없어요. 브라우저의 위치 권한을 허용해주세요.');
@@ -2053,6 +2114,7 @@ function requestUserLocation(){
   );
 }
 document.getElementById('home-locate-btn').addEventListener('click', requestUserLocation);
+document.getElementById('map-locate-btn').addEventListener('click', requestUserLocation);
 
 /* ---------------- Building-to-building directions screen ---------------- */
 function populateDirectionsSelects(){
