@@ -401,15 +401,15 @@
   }
   #map-pins{ position:absolute; inset:0; }
   .map-pin{
-    position:absolute; width:20px; height:20px; margin:-10px 0 0 -10px;
+    position:absolute; width:16px; height:16px; margin:-8px 0 0 -8px;
     border-radius:50%; cursor:pointer;
-    background:rgba(255,252,244,0.94);
+    background:transparent;
     border:2px solid var(--gold-deep);
-    box-shadow:0 1px 5px rgba(0,0,0,0.4);
+    box-shadow:0 0 0 1.5px rgba(255,255,255,0.9), 0 1px 3px rgba(0,0,0,0.3);
     transition:background 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
   }
-  .map-pin.matched{ background:var(--gold); border-color:var(--ink); transform:scale(1.3); }
-  .map-pin.selected{ background:var(--danger); border-color:#fff; transform:scale(1.4); box-shadow:0 2px 8px rgba(0,0,0,0.5); }
+  .map-pin.matched{ background:var(--gold); border-color:var(--ink); transform:scale(1.4); }
+  .map-pin.selected{ background:var(--danger); border-color:#fff; transform:scale(1.5); box-shadow:0 0 0 1.5px rgba(255,255,255,0.9), 0 2px 8px rgba(0,0,0,0.5); }
   .map-controls{
     position:absolute; top:8px; right:8px;
     display:flex; flex-direction:column; gap:4px;
@@ -1752,7 +1752,7 @@ function applyMapTransform(){
     if(activePointers.size >= 2){
       const pts = [...activePointers.values()];
       const dist = Math.hypot(pts[0].x-pts[1].x, pts[0].y-pts[1].y);
-      mapZoom = Math.min(4, Math.max(1, pinchStartZoom * (dist/pinchStartDist)));
+      mapZoom = Math.min(2.2, Math.max(1, pinchStartZoom * (dist/pinchStartDist)));
       applyMapTransform();
       return;
     }
@@ -1788,7 +1788,7 @@ function applyMapTransform(){
   });
 
   document.getElementById('zoom-in').addEventListener('click', ()=>{
-    mapZoom = Math.min(4, mapZoom * 1.35);
+    mapZoom = Math.min(2.2, mapZoom * 1.35);
     applyMapTransform();
   });
   document.getElementById('zoom-out').addEventListener('click', ()=>{
