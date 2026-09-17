@@ -1280,6 +1280,7 @@ const BUILDINGS = [
   {id:"51", name:"사회관", sub:"사회관", info:"강의실과 교수 연구실이 있는 건물이에요.", px:379, py:571, lat:35.9713667, lng:126.957126, illust:"humanities"},
   {id:"51-1", name:"제2사회관", sub:"제2사회관", info:"사회관의 별관 건물이에요.", px:454, py:496, lat:null, lng:null, illust:"humanities"},
   {id:"51-2", name:"소방행정관", sub:"소방행정관", info:"소방행정학과 관련 강의실이 있는 건물이에요.", px:351, py:526, lat:null, lng:null, illust:"office"},
+  {id:"52", name:"미술관", sub:"미술관", info:"정확한 용도 정보는 준비 중이에요.", px:499, py:646, lat:null, lng:null, illust:"humanities"},
   {id:"53", name:"경상관", sub:"경상관", info:"강의실과 교수 연구실이 있는 건물이에요.", px:454, py:556, lat:35.9709779, lng:126.9575982, illust:"humanities"},
   {id:"53-1", name:"경상신관", sub:"경상신관", info:"경상관의 신관 건물이에요.", px:510, py:586, lat:null, lng:null, illust:"humanities"},
   {id:"55", name:"학군단", sub:"학군단", info:"학군단(ROTC) 관련 시설이 있는 건물이에요.", px:469, py:391, lat:null, lng:null, illust:"office"},
@@ -1318,20 +1319,109 @@ const BUILDINGS = [
   {id:"84", name:"원광대학교병원 응급의료센터", sub:"제2의학관", info:"응급 환자를 진료하는 응급의료센터예요.", px:1198, py:826, lat:null, lng:null, illust:"medical"},
   {id:"85", name:"원광대학교병원 장례문화원", sub:"장례문화원", info:"장례 절차를 지원하는 장례문화원이에요.", px:1363, py:796, lat:null, lng:null, illust:"hall"},
   {id:"86", name:"프라임관", sub:"컨퍼런스홀 외", info:"컨퍼런스홀 등 각종 행사가 열리는 건물이에요.", px:729, py:751, lat:35.9684744, lng:126.9579818, illust:"office"},
-  {id:"101", name:"유일학림관", sub:"유일학림관", info:"정확한 위치·용도 정보는 준비 중이에요.", px:139, py:841, lat:null, lng:null, illust:"office"},
-  {id:"102", name:"WM관", sub:"WM관", info:"정확한 위치·용도 정보는 준비 중이에요.", px:276, py:841, lat:null, lng:null, illust:"office"},
-  {id:"103", name:"보건도서관", sub:"보건계열 도서관", info:"정확한 위치 정보는 준비 중이에요.", px:244, py:796, lat:null, lng:null, illust:"library"},
-  {id:"104", name:"미래관", sub:"미래관", info:"정확한 위치·용도 정보는 준비 중이에요.", px:187, py:766, lat:null, lng:null, illust:"office"},
-  {id:"105", name:"학생성공관", sub:"학생성공관", info:"정확한 위치·용도 정보는 준비 중이에요.", px:79, py:736, lat:null, lng:null, illust:"office"},
-  {id:"106", name:"멀티미디어센터", sub:"멀티미디어센터", info:"정확한 위치·용도 정보는 준비 중이에요.", px:60, py:676, lat:null, lng:null, illust:"office"},
-  {id:"107", name:"보건관", sub:"보건관", info:"정확한 위치·용도 정보는 준비 중이에요.", px:187, py:616, lat:null, lng:null, illust:"medical"},
-  {id:"108", name:"문화관", sub:"문화관", info:"정확한 위치·용도 정보는 준비 중이에요.", px:262, py:579, lat:null, lng:null, illust:"hall"},
-  {id:"109", name:"행복기숙사", sub:"학생생활관(기숙사)", info:"학생들이 생활하는 기숙사 건물이에요. 정확한 위치 정보는 준비 중이에요.", px:80, py:586, lat:null, lng:null, illust:"student"},
+  {id:"101", name:"유일학림관", sub:"유일학림관", info:"정확한 용도 정보는 준비 중이에요.", px:139, py:841, lat:null, lng:null, illust:"office"},
+  {id:"102", name:"WM관", sub:"WM관", info:"정확한 용도 정보는 준비 중이에요.", px:276, py:841, lat:null, lng:null, illust:"office"},
+  {id:"103", name:"보건도서관", sub:"보건계열 도서관", info:"정확한 용도 정보는 준비 중이에요.", px:244, py:796, lat:null, lng:null, illust:"library"},
+  {id:"104", name:"미래관", sub:"미래관", info:"정확한 용도 정보는 준비 중이에요.", px:187, py:766, lat:null, lng:null, illust:"office"},
+  {id:"105", name:"학생성공관", sub:"학생성공관", info:"정확한 용도 정보는 준비 중이에요.", px:79, py:736, lat:null, lng:null, illust:"office"},
+  {id:"106", name:"멀티미디어센터", sub:"멀티미디어센터", info:"정확한 용도 정보는 준비 중이에요.", px:60, py:676, lat:null, lng:null, illust:"office"},
+  {id:"107", name:"보건관", sub:"보건관", info:"정확한 용도 정보는 준비 중이에요.", px:187, py:616, lat:null, lng:null, illust:"medical"},
+  {id:"108", name:"문화관", sub:"문화관", info:"정확한 용도 정보는 준비 중이에요.", px:262, py:579, lat:null, lng:null, illust:"hall"},
+  {id:"109", name:"행복기숙사", sub:"학생생활관(기숙사)", info:"학생들이 생활하는 기숙사 건물이에요.", px:80, py:586, lat:null, lng:null, illust:"student"},
   {id:"110", name:"학림관", sub:"학림관", info:"정확한 용도 정보는 준비 중이에요.", px:157, py:496, lat:35.9726999, lng:126.9561816, illust:"office"},
-  {id:"111", name:"정진관", sub:"정진관", info:"정확한 위치·용도 정보는 준비 중이에요.", px:367, py:631, lat:null, lng:null, illust:"office"},
-  {id:"112", name:"창업관", sub:"창업관", info:"정확한 위치·용도 정보는 준비 중이에요.", px:337, py:601, lat:null, lng:null, illust:"office"},
-  {id:"113", name:"예능관", sub:"예능관", info:"정확한 위치·용도 정보는 준비 중이에요.", px:262, py:541, lat:null, lng:null, illust:"hall"},
+  {id:"111", name:"정진관", sub:"정진관", info:"정확한 용도 정보는 준비 중이에요.", px:367, py:631, lat:null, lng:null, illust:"office"},
+  {id:"112", name:"창업관", sub:"창업관", info:"정확한 용도 정보는 준비 중이에요.", px:337, py:601, lat:null, lng:null, illust:"office"},
+  {id:"113", name:"예능관", sub:"예능관", info:"정확한 용도 정보는 준비 중이에요.", px:262, py:541, lat:null, lng:null, illust:"hall"},
 ];
+
+/* 원광대학교 공식 캠퍼스맵 페이지(wku.ac.kr)에 게재된 건물 사진. 실제 존재하지 않는 사진을 만들지 않기 위해
+   학교가 직접 올린 사진만 사용하고, 없는 건물은 그대로 일러스트로 남겨둔다. */
+const OFFICIAL_PHOTOS = {
+  "1": "https://image.wku.ac.kr/2024/01/1.정문.jpg",
+  "2": "https://image.wku.ac.kr/2024/01/2.대학서문.jpg",
+  "3": "https://image.wku.ac.kr/2024/01/3.남문.jpg",
+  "4": "https://image.wku.ac.kr/2024/01/4.동문.jpg",
+  "5": "https://image.wku.ac.kr/2024/01/5.대운동장-2.jpg",
+  "6": "https://image.wku.ac.kr/2024/01/6.소운동장.jpg",
+  "7": "https://image.wku.ac.kr/2024/01/7.자연식물원-1.jpg",
+  "11": "https://image.wku.ac.kr/2024/01/11.XR개발지원센터.jpg",
+  "12": "https://image.wku.ac.kr/2024/01/12.대학본관.jpg",
+  "13": "https://image.wku.ac.kr/2024/01/13.구생활과학대학.jpg",
+  "14": "https://image.wku.ac.kr/2024/01/14.학생지원관공자학원.jpg",
+  "14-1": "https://image.wku.ac.kr/2024/01/14-1.중앙도서관.jpg",
+  "15": "https://image.wku.ac.kr/2024/01/15.노천극장.jpg",
+  "16": "https://image.wku.ac.kr/2024/01/16.60주년기념관평생교육원.jpg",
+  "17": "https://image.wku.ac.kr/2024/01/17.숭산기념관대학교당교직원식당.jpg",
+  "18": "https://image.wku.ac.kr/2024/01/18.원체육관.jpg",
+  "19": "https://image.wku.ac.kr/2024/01/19.스포츠과학관.jpg",
+  "20": "https://image.wku.ac.kr/2024/01/20.교학대학.jpg",
+  "21": "https://image.wku.ac.kr/2024/01/21.수덕호봉황각.jpg",
+  "22": "https://image.wku.ac.kr/2024/01/22.공공정책대학.jpg",
+  "22-1": "https://image.wku.ac.kr/2024/01/22-1.공공정책대학-별관.jpg",
+  "24": "https://image.wku.ac.kr/2024/01/24.학생회관학생식당.jpg",
+  "25": "https://image.wku.ac.kr/2024/01/25.원광디지털대학교.jpg",
+  "26": "https://image.wku.ac.kr/2024/01/26.법학전문대학원.jpg",
+  "30": "https://image.wku.ac.kr/2024/01/30.학생생활관_용화관.jpg",
+  "31": "https://image.wku.ac.kr/2024/01/31.학생생활관_개벽관운영관리과.식당.jpg",
+  "32": "https://image.wku.ac.kr/2024/01/32.학생생활관_학림관.jpg",
+  "33": "https://image.wku.ac.kr/2024/01/33.학생생활관_삼동관.jpg",
+  "34": "https://image.wku.ac.kr/2024/01/34.학생생활관_사은관.jpg",
+  "36": "https://image.wku.ac.kr/2024/01/36.학생생활관_어학관.jpg",
+  "37": "https://image.wku.ac.kr/2024/01/37.학생생활관_청운관.jpg",
+  "38": "https://image.wku.ac.kr/2024/01/38.글로벌교류센터.jpg",
+  "51": "https://image.wku.ac.kr/2024/01/51.사회과학대학.jpg",
+  "51-1": "https://image.wku.ac.kr/2024/01/51-1.사회과학대학-신관.jpg",
+  "51-2": "https://image.wku.ac.kr/2024/01/51-2.소방행정관.jpg",
+  "52": "https://image.wku.ac.kr/2024/01/52.조형예술디자인대학.jpg",
+  "53": "https://image.wku.ac.kr/2024/01/53.경영대학.jpg",
+  "53-1": "https://image.wku.ac.kr/2024/01/53-1.경영대학-신관.jpg",
+  "55": "https://image.wku.ac.kr/2024/01/55.학군단.jpg",
+  "56": "https://image.wku.ac.kr/2024/01/56.인문대학.jpg",
+  "57": "https://image.wku.ac.kr/2025/03/57.새천년관.jpg",
+  "59": "https://image.wku.ac.kr/2024/01/59.창의공과대학.jpg",
+  "59-1": "https://image.wku.ac.kr/2024/01/59-1.창의공과대학-기계공작실.jpg",
+  "59-2": "https://image.wku.ac.kr/2024/01/59-2.창의공과대학-U.T.M실.jpg",
+  "59-3": "https://image.wku.ac.kr/2024/01/59-3.자동차실습관.jpg",
+  "60": "https://image.wku.ac.kr/2024/01/60.박물관.jpg",
+  "61": "https://image.wku.ac.kr/2024/01/61.도예관.jpg",
+  "62": "https://image.wku.ac.kr/2024/01/62.조소관.jpg",
+  "62-1": "https://image.wku.ac.kr/2024/01/62-1.조소관-별관.jpg",
+  "63": "https://image.wku.ac.kr/2024/01/63.보건과학대학.jpg",
+  "64": "https://image.wku.ac.kr/2024/01/64.승리관.jpg",
+  "65": "https://image.wku.ac.kr/2024/01/65.문화체육관.jpg",
+  "65-1": "https://image.wku.ac.kr/2024/01/65-1.문화체육관-별관.jpg",
+  "67": "https://image.wku.ac.kr/2024/01/67.창업보육센터무빙테크노관.jpg",
+  "68": "https://image.wku.ac.kr/2024/01/68.약학대학.jpg",
+  "69": "https://image.wku.ac.kr/2024/01/69.의과대학.JPG",
+  "69-1": "https://image.wku.ac.kr/2024/01/69-1.제생의세관.jpg",
+  "69-2": "https://image.wku.ac.kr/2024/01/69-2.제1호-산학협력관.jpg",
+  "70": "https://image.wku.ac.kr/2024/01/70.한의학전문대학원.jpg",
+  "71": "https://image.wku.ac.kr/2024/01/71.한의과대학.jpg",
+  "72": "https://image.wku.ac.kr/2024/01/72.사범대학.jpg",
+  "72-1": "https://image.wku.ac.kr/2024/01/72-1.사범대학부속유치원.jpg",
+  "73": "https://image.wku.ac.kr/2024/01/73.구평생교육원-.jpg",
+  "74": "https://image.wku.ac.kr/2024/01/74.치과대학.jpg",
+  "74-1": "https://image.wku.ac.kr/2024/01/74-1.제2치학관.jpg",
+  "80": "https://image.wku.ac.kr/2024/01/80.원광문화센터.jpg",
+  "81": "https://image.wku.ac.kr/2024/01/81.원광대학교-한방병원.jpg",
+  "82": "https://image.wku.ac.kr/2024/01/82.원광대학교병원.jpg",
+  "83": "https://image.wku.ac.kr/2024/01/83.치과대학-치과병원-1.jpg",
+  "84": "https://image.wku.ac.kr/2024/01/84.응급의료센터%C2%B7전북권역외상센터.jpg",
+  "85": "https://image.wku.ac.kr/2024/01/85.원광대학교병원%20장례문화원.jpg",
+  "86": "https://image.wku.ac.kr/2024/01/86.프라임관.jpg",
+  "102": "https://image.wku.ac.kr/2024/01/보-WM관.jpg",
+  "103": "https://image.wku.ac.kr/2024/01/보-도서관.jpg",
+  "104": "https://image.wku.ac.kr/2024/01/보-미래관.jpg",
+  "105": "https://image.wku.ac.kr/2024/01/보-학생성공관.jpg",
+  "106": "https://image.wku.ac.kr/2024/01/보-멀티미디어센터.jpg",
+  "107": "https://image.wku.ac.kr/2024/01/보-보건관.jpg",
+  "108": "https://image.wku.ac.kr/2024/01/보-문화관.jpg",
+  "109": "https://image.wku.ac.kr/2024/01/보-학생생활관.jpg",
+  "110": "https://image.wku.ac.kr/2024/01/보-학림관.jpg",
+  "111": "https://image.wku.ac.kr/2024/01/보-정진관.jpg",
+  "112": "https://image.wku.ac.kr/2026/04/보-창의관.jpg",
+  "113": "https://image.wku.ac.kr/2024/01/보-예능관.jpg"
+};
 
 const ILLUSTRATIONS = {
   office: `<svg viewBox="0 0 160 110"><rect x="30" y="20" width="100" height="80" rx="3" fill="#17284a"/><rect x="30" y="20" width="100" height="10" fill="#b8912f"/>${Array.from({length:4}).map((_,r)=>Array.from({length:5}).map((__,c)=>`<rect x="${42+c*17}" y="${40+r*15}" width="9" height="9" fill="#f6f4ef" opacity="0.85"/>`).join('')).join('')}<rect x="70" y="82" width="20" height="18" fill="#e8dcb8"/><polygon points="20,100 140,100 130,90 30,90" fill="#0f1c33"/></svg>`,
@@ -1472,10 +1562,18 @@ function renderIllust(b){
   const photo = getSavedPhoto(b.id);
   const box = document.getElementById('bldg-illust');
   const actions = document.getElementById('photo-actions');
+  const officialPhoto = OFFICIAL_PHOTOS[b.id];
   if(photo){
     box.innerHTML = `<img src="${photo}" alt="${b.name}">`;
     actions.classList.add('has-photo');
     document.querySelector('#photo-actions label').textContent = "📷 사진 변경";
+  } else if(officialPhoto){
+    box.innerHTML = `<img src="${officialPhoto}" alt="${b.name}">`;
+    box.querySelector('img').addEventListener('error', ()=>{
+      box.innerHTML = ILLUSTRATIONS[b.illust] || '';
+    }, {once:true});
+    actions.classList.remove('has-photo');
+    document.querySelector('#photo-actions label').textContent = "📷 내 사진으로 바꾸기";
   } else {
     box.innerHTML = ILLUSTRATIONS[b.illust] || '';
     actions.classList.remove('has-photo');
