@@ -463,7 +463,22 @@
     margin:0 0 14px;
   }
   .home-search input{ font-size:16px; }
-  .home-directions-btn{ display:block; width:100%; max-width:none; margin:16px 0 0; }
+  .home-action-btn{
+    display:block; width:100%; box-sizing:border-box;
+    padding:13px; margin-top:10px;
+    border-radius:var(--radius-md); border:1px solid var(--line);
+    background:var(--surface); color:var(--ink);
+    font-size:13.5px; font-weight:600; text-align:center; cursor:pointer;
+    font-family:'Noto Sans KR', sans-serif;
+  }
+  .home-action-btn.primary{
+    border-color:var(--ink); background:var(--ink); color:var(--gold-deep);
+    font-size:14.5px;
+  }
+  :root[data-theme="dark"] .home-action-btn.primary, :root:not([data-theme="light"]) .home-action-btn.primary{
+    color:var(--gold);
+  }
+  .home-directions-btn{ margin-top:16px; }
   .home-recent{ margin-top:18px; }
   .home-recent-list{ display:flex; flex-wrap:wrap; gap:8px; }
   .home-recent-chip{
@@ -979,7 +994,7 @@
           <span class="search-ic" aria-hidden="true">🔍</span>
           <input id="home-search-input" type="text" inputmode="search" placeholder="건물명, 건물번호로 검색 (예: 59, 학생회관)" aria-label="건물 검색">
         </div>
-        <button class="detail-map-btn" id="home-locate-btn">📍 내 위치로 찾기</button>
+        <button class="home-action-btn" id="home-locate-btn">📍 내 위치로 찾기</button>
         <p class="home-locate-status" id="home-locate-status"></p>
       </div>
 
@@ -988,7 +1003,7 @@
         <div class="home-recent-list" id="home-recent-list"></div>
       </div>
 
-      <button class="med-main-btn home-directions-btn" data-goto="directions">🚶 건물 간 경로</button>
+      <button class="home-action-btn primary home-directions-btn" data-goto="directions">🚶 건물 간 경로</button>
 
       <div class="section-label">빠른 기능</div>
       <div class="home-quick-grid">
@@ -1650,7 +1665,7 @@ function renderRouteInto(svg, result, fromPoint, toPoint, opts){
   if(opts && opts.showMarkers && fromPoint && toPoint){
     const p1 = geoToPixel(fromPoint.lat, fromPoint.lng);
     const p2 = geoToPixel(toPoint.lat, toPoint.lng);
-    markers = `<circle cx="${p1.px.toFixed(1)}" cy="${p1.py.toFixed(1)}" r="22" fill="var(--sage)" stroke="#fff" stroke-width="5"/>` +
+    markers = `<circle cx="${p1.px.toFixed(1)}" cy="${p1.py.toFixed(1)}" r="22" fill="var(--gold)" stroke="#fff" stroke-width="5"/>` +
       `<circle cx="${p2.px.toFixed(1)}" cy="${p2.py.toFixed(1)}" r="22" fill="var(--danger)" stroke="#fff" stroke-width="5"/>`;
   }
   svg.innerHTML = `<polyline points="${points}" fill="none" stroke="${strokeColor}" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" opacity="0.92" ${dash}/>${markers}`;
