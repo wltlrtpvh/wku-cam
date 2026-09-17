@@ -1073,6 +1073,7 @@
           <span id="detail-dist-text">내 위치를 확인하면 거리를 알 수 있어요</span>
         </button>
         <p class="detail-info" id="detail-info"></p>
+        <p class="detail-info" id="detail-dept"></p>
 
         <div class="bldg-illust" id="bldg-illust"></div>
         <div class="photo-actions" id="photo-actions">
@@ -1337,7 +1338,7 @@ const BUILDINGS = [
   {id:"17", name:"숭산기념관", sub:"대학교당·교직원식당", info:"대학교당과 교직원 식당이 있는 건물이에요.", px:658, py:1186, lat:null, lng:null, illust:"hall", rooms:null},
   {id:"18", name:"원체육관", sub:"실내 체육시설", info:"농구·배구 등 실내 체육 수업과 행사가 열리는 체육관이에요.", px:519, py:1051, lat:35.968256, lng:126.9549874, illust:"sports", rooms:null},
   {id:"19", name:"스포츠과학관", sub:"스포츠과학관", info:"스포츠과학 관련 강의와 실습이 이뤄지는 건물이에요.", px:561, py:1021, lat:35.96813612189898, lng:126.95530817798436, illust:"sports", rooms:null},
-  {id:"20", name:"교학관", sub:"교학관", info:"강의실과 교수 연구실이 있는 건물이에요.", px:289, py:751, lat:null, lng:null, illust:"humanities", rooms:null},
+  {id:"20", name:"교학관", sub:"교학관", info:"강의실과 교수 연구실이 있는 건물이에요.", px:289, py:751, lat:null, lng:null, illust:"humanities", dept:"교학대학", deptFloor:"1층", rooms:null},
   {id:"21", name:"수덕호", sub:"봉황각", info:"캠퍼스 중심에 있는 연못으로, 봉황각과 함께 산책하기 좋아요.", px:490, py:826, lat:null, lng:null, illust:"museum", rooms:null},
   {id:"22", name:"공공정책관", sub:"공공정책관", info:"공공정책 관련 강의실이 있는 건물이에요.", px:570, py:871, lat:null, lng:null, illust:"humanities", rooms:null},
   {id:"22-1", name:"공공정책관별관", sub:"공공정책관별관", info:"공공정책관의 별관 건물이에요.", px:633, py:901, lat:null, lng:null, illust:"humanities", rooms:null},
@@ -1353,17 +1354,17 @@ const BUILDINGS = [
   {id:"36", name:"어학관", sub:"어학관", info:"외국어 강의와 어학 실습이 이뤄지는 건물이에요.", px:214, py:286, lat:35.97384354359116, lng:126.95746032792093, illust:"humanities", rooms:null},
   {id:"37", name:"청운관", sub:"청운관", info:"정확한 용도 정보는 준비 중이에요.", px:304, py:361, lat:35.973165905447814, lng:126.95772234902871, illust:"office", rooms:null},
   {id:"38", name:"익산글로벌교류센터", sub:"익산글로벌교류센터", info:"외국인 유학생 지원과 국제 교류 업무를 담당하는 곳이에요.", px:414, py:466, lat:35.97206992997699, lng:126.95752336686554, illust:"office", rooms:null},
-  {id:"51", name:"사회관", sub:"사회관", info:"강의실과 교수 연구실이 있는 건물이에요.", px:379, py:571, lat:35.9713667, lng:126.957126, illust:"humanities", rooms:null},
+  {id:"51", name:"사회관", sub:"사회관", info:"강의실과 교수 연구실이 있는 건물이에요.", px:379, py:571, lat:35.9713667, lng:126.957126, illust:"humanities", dept:"사회과학대학", deptFloor:"1층", rooms:null},
   {id:"51-1", name:"제2사회관", sub:"제2사회관", info:"사회관의 별관 건물이에요.", px:454, py:496, lat:35.971381448528, lng:126.9577055614054, illust:"humanities", rooms:null},
   {id:"51-2", name:"소방행정관", sub:"소방행정관", info:"소방행정학과 관련 강의실이 있는 건물이에요.", px:351, py:526, lat:35.9718606945302, lng:126.95710660771371, illust:"office", rooms:null},
   {id:"52", name:"미술관", sub:"미술관", info:"정확한 용도 정보는 준비 중이에요.", px:499, py:646, lat:null, lng:null, illust:"humanities", rooms:null},
   {id:"53", name:"경상관", sub:"경상관", info:"강의실과 교수 연구실이 있는 건물이에요.", px:454, py:556, lat:35.9709779, lng:126.9575982, illust:"humanities", rooms:null},
   {id:"53-1", name:"경상신관", sub:"경상신관", info:"경상관의 신관 건물이에요.", px:510, py:586, lat:null, lng:null, illust:"humanities", rooms:null},
   {id:"55", name:"학군단", sub:"학군단", info:"학군단(ROTC) 관련 시설이 있는 건물이에요.", px:469, py:391, lat:35.9719622039029, lng:126.95873412664837, illust:"office", rooms:null},
-  {id:"56", name:"인문관", sub:"인문관", info:"국어국문학과 등 인문 계열 강의실이 있는 건물이에요.", px:529, py:436, lat:35.9712557, lng:126.9587092, illust:"humanities", rooms:null},
-  {id:"57", name:"새천년관", sub:"새천년관", info:"각종 강의와 행사가 열리는 건물이에요.", px:579, py:526, lat:35.9705959, lng:126.9586772, illust:"hall", rooms:null},
+  {id:"56", name:"인문관", sub:"인문관", info:"국어국문학과 등 인문 계열 강의실이 있는 건물이에요.", px:529, py:436, lat:35.9712557, lng:126.9587092, illust:"humanities", dept:"인문대학", deptFloor:"2층", rooms:null},
+  {id:"57", name:"새천년관", sub:"새천년관", info:"각종 강의와 행사가 열리는 건물이에요.", px:579, py:526, lat:35.9705959, lng:126.9586772, illust:"hall", dept:"경영대학", deptFloor:"2층", rooms:null},
   {id:"58", name:"물품보관창고", sub:"물품보관창고", info:"교내 물품을 보관하는 창고예요.", px:636, py:271, lat:null, lng:null, illust:"office", rooms:null},
-  {id:"59", name:"공학관", sub:"공학관", info:"공학 계열 강의실과 실습실이 있는 건물이에요.", px:799, py:826, lat:35.9678672, lng:126.9581537, illust:"engineering", rooms:null},
+  {id:"59", name:"공학관", sub:"공학관", info:"공학 계열 강의실과 실습실이 있는 건물이에요.", px:799, py:826, lat:35.9678672, lng:126.9581537, illust:"engineering", dept:"창의공과대학", deptFloor:"2층", rooms:null},
   {id:"59-1", name:"공학교육혁신관", sub:"공학교육혁신관", info:"정확한 용도 정보는 준비 중이에요.", px:888, py:601, lat:null, lng:null, illust:"engineering", rooms:null},
   {id:"59-2", name:"글로벌창업지원관", sub:"글로벌창업지원관", info:"정확한 용도 정보는 준비 중이에요.", px:923, py:661, lat:null, lng:null, illust:"engineering", rooms:null},
   {id:"59-3", name:"자동차공학실습관", sub:"자동차공학실습관", info:"자동차공학 관련 실습이 이뤄지는 건물이에요.", px:1013, py:631, lat:35.968245967444915, lng:126.96012408981748, illust:"engineering", rooms:null},
@@ -1377,13 +1378,13 @@ const BUILDINGS = [
   {id:"65-1", name:"문화체육관 별관", sub:"문화체육관 별관", info:"문화체육관의 별관 건물이에요.", px:980, py:1066, lat:35.96563516576366, lng:126.95774410165299, illust:"sports", rooms:null},
   {id:"66", name:"생명자원과학관", sub:"생명자원과학관", info:"생명자원과학 계열 강의실과 실습실이 있는 건물이에요.", px:912, py:511, lat:null, lng:null, illust:"engineering", rooms:null},
   {id:"67", name:"무빙테크노관", sub:"창업보육센터", info:"창업보육센터가 있어 학생 창업을 지원하는 건물이에요.", px:846, py:346, lat:35.96991185759482, lng:126.96135166165239, illust:"office", rooms:null},
-  {id:"68", name:"약학관", sub:"약학관", info:"약학 계열 강의실과 실습실이 있는 건물이에요.", px:1009, py:796, lat:35.9669229, lng:126.9595981, illust:"pharmacy", rooms:null},
+  {id:"68", name:"약학관", sub:"약학관", info:"약학 계열 강의실과 실습실이 있는 건물이에요.", px:1009, py:796, lat:35.9669229, lng:126.9595981, illust:"pharmacy", dept:"약학대학", deptFloor:"1층", rooms:null},
   {id:"69", name:"의학관", sub:"의학관", info:"의학 계열 강의실과 실습실이 있는 건물이에요.", px:1099, py:931, lat:35.9657047, lng:126.9590814, illust:"medical", rooms:null},
   {id:"69-1", name:"제생의세관", sub:"제생의세관", info:"정확한 용도 정보는 준비 중이에요.", px:1086, py:856, lat:35.96621622869142, lng:126.95967722743275, illust:"medical", rooms:null},
   {id:"69-2", name:"산학협력1관", sub:"산학협력1관", info:"산학협력 관련 연구와 사업이 이뤄지는 건물이에요.", px:1015, py:901, lat:35.96635671270944, lng:126.95935343804004, illust:"office", rooms:null},
   {id:"70", name:"한의전문관", sub:"한의전문관", info:"한의학전문대학원 강의실과 연구실이 있는 건물이에요.", px:1080, py:1021, lat:35.9652841, lng:126.9586815, illust:"medical", rooms:null},
   {id:"71", name:"한의관", sub:"한의관", info:"한의학 계열 강의실과 실습실이 있는 건물이에요.", px:1114, py:1066, lat:35.964903633685914, lng:126.95852938222514, illust:"medical", rooms:null},
-  {id:"72", name:"사범관", sub:"사범관", info:"강의실과 교수 연구실이 있는 건물이에요.", px:1069, py:661, lat:35.9673117, lng:126.9608757, illust:"humanities", rooms:null},
+  {id:"72", name:"사범관", sub:"사범관", info:"강의실과 교수 연구실이 있는 건물이에요.", px:1069, py:661, lat:35.9673117, lng:126.9608757, illust:"humanities", dept:"사범대학", deptFloor:"1층", rooms:null},
   {id:"72-1", name:"사범대학 부속유치원", sub:"부속유치원", info:"사범대학이 운영하는 부속 유치원이에요.", px:1186, py:601, lat:35.96721916288131, lng:126.96199598239336, illust:"humanities", rooms:null},
   {id:"73", name:"간호과학관", sub:"간호과학관", info:"간호 계열 강의실과 실습실이 있는 건물이에요.", px:1155, py:691, lat:35.96675022749754, lng:126.96108713159668, illust:"medical", rooms:null},
   {id:"74", name:"치의관", sub:"치의학과", info:"치의학 계열 강의실과 실습실이 있는 건물이에요.", px:1264, py:901, lat:35.9650573, lng:126.9606074, illust:"medical", rooms:null},
@@ -1920,6 +1921,9 @@ function updateDetail(){
   badgeEl.style.fontSize = b.id.length>2 ? '10px' : '12.5px';
   document.getElementById('detail-name').textContent = b.name;
   document.getElementById('detail-info').textContent = b.info || b.sub;
+  document.getElementById('detail-dept').textContent = b.dept
+    ? `관련 학과: ${b.dept}${b.deptFloor ? ` (행정실 ${b.deptFloor})` : ''}`
+    : '관련 학과 정보는 준비 중이에요.';
   renderIllust(b);
   updateDetailDistLine(b);
   setupCompare(b);
