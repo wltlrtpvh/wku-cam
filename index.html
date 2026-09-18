@@ -104,17 +104,17 @@
     align-items:center;
     justify-content:space-between;
     flex:none;
+    transform:translateY(0);
     opacity:1;
-    max-height:80px;
-    overflow:hidden;
-    transition:opacity 0.24s ease, max-height 0.24s ease, padding 0.24s ease;
+    transition:transform 0.28s ease, opacity 0.2s ease;
   }
   header.top.collapsed{
+    transform:translateY(-100%);
     opacity:0;
-    max-height:0;
-    padding-top:0;
-    padding-bottom:0;
     pointer-events:none;
+  }
+  header.top.hidden-space{
+    display:none;
   }
   header.top h1{
     font-family:'Gowun Batang', serif;
@@ -909,6 +909,7 @@
     background:var(--surface);
     border-bottom:1px solid var(--line);
     padding:0 20px;
+    transition:transform 0.22s ease;
   }
   nav.tabbar button{
     flex:1;
@@ -2494,28 +2495,35 @@ document.getElementById('home-search-input').addEventListener('input', (e)=>{
 (function(){
   const mainEl = document.querySelector('main');
   const header = document.querySelector('header.top');
+  const tabbar = document.querySelector('nav.tabbar');
   let lastTop = 0;
-  // 헤더가 max-height로 접히는 동안 main의 남는 공간이 커져서 스크롤이 바닥 근처면
-  // scrollTop이 살짝 당겨질 수 있는데, 그게 다시 scroll 이벤트로 잡혀 즉시 반대 방향으로
-  // 토글되는 걸 막기 위한 잠금(트랜지션 지속시간 동안만 스크롤 판정을 쉼 — 트리거 자체는
-  // 여전히 히스테리시스 기반으로 한 번만 발생함, 연속 애니메이션이 아님).
-  let headerLocked = false;
+  let hideSpaceTimer = null;
 
   function collapseHeader(){
     if(header.classList.contains('collapsed')) return;
     header.classList.add('collapsed');
-    headerLocked = true;
-    setTimeout(()=>{ headerLocked = false; }, 300);
+    clearTimeout(hideSpaceTimer);
+    hideSpaceTimer = setTimeout(()=>{
+      header.classList.add('hidden-space');
+      // 탭바가 header 자리로 실제로 올라붙는(레이아웃) 순간, 아주 살짝 눌렸다가 제자리로
+      // 오는 transform만 얹어서 header가 사라지는 움직임과 이어지는 느낌을 준다.
+      // transform은 레이아웃에 영향을 주지 않아 리플로우/스크롤 흔들림 위험이 없다.
+      tabbar.style.transition = 'none';
+      tabbar.style.transform = 'translateY(-8px)';
+      void tabbar.offsetHeight; // 강제 리플로우: 위 스타일이 트랜지션 없이 즉시 적용되게 함
+      tabbar.style.transition = '';
+      tabbar.style.transform = '';
+    }, 280);
   }
   function expandHeader(){
+    clearTimeout(hideSpaceTimer);
     if(!header.classList.contains('collapsed')) return;
+    header.classList.remove('hidden-space');
+    void header.offsetHeight; // 강제 리플로우: display가 먼저 복원된 뒤에 transform 전환이 재생되도록 함
     header.classList.remove('collapsed');
-    headerLocked = true;
-    setTimeout(()=>{ headerLocked = false; }, 300);
   }
 
   mainEl.addEventListener('scroll', ()=>{
-    if(headerLocked) return;
     const top = mainEl.scrollTop;
     if(top <= 0){
       expandHeader();
