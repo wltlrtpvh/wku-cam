@@ -909,7 +909,7 @@
     background:var(--surface);
     border-bottom:1px solid var(--line);
     padding:0 20px;
-    transition:transform 0.22s ease;
+    transition:transform 0.28s ease;
   }
   nav.tabbar button{
     flex:1;
@@ -2501,26 +2501,37 @@ document.getElementById('home-search-input').addEventListener('input', (e)=>{
 
   function collapseHeader(){
     if(header.classList.contains('collapsed')) return;
+    // header와 탭바가 같은 순간부터 같은 0.28s 동안 같은 방향(위)으로 함께 움직이게 해서
+    // "한 덩어리로 쓸려 올라가는" 느낌을 준다. 실제 높이만큼 tabbar를 끌어올린다.
+    const h = header.getBoundingClientRect().height;
+    tabbar.style.transform = `translateY(-${h}px)`;
     header.classList.add('collapsed');
     clearTimeout(hideSpaceTimer);
     hideSpaceTimer = setTimeout(()=>{
+      // 이 순간 header가 실제로 레이아웃에서 빠지면서 tabbar가 같은 만큼 위로 올라붙는다.
+      // tabbar는 이미 transform으로 그만큼 위에 가 있던 상태라, transform을 트랜지션 없이
+      // 즉시 0으로 되돌려도 화면상 위치는 그대로 유지된다(리플로우와 이어붙이기).
       header.classList.add('hidden-space');
-      // 탭바가 header 자리로 실제로 올라붙는(레이아웃) 순간, 아주 살짝 눌렸다가 제자리로
-      // 오는 transform만 얹어서 header가 사라지는 움직임과 이어지는 느낌을 준다.
-      // transform은 레이아웃에 영향을 주지 않아 리플로우/스크롤 흔들림 위험이 없다.
       tabbar.style.transition = 'none';
-      tabbar.style.transform = 'translateY(-8px)';
-      void tabbar.offsetHeight; // 강제 리플로우: 위 스타일이 트랜지션 없이 즉시 적용되게 함
-      tabbar.style.transition = '';
       tabbar.style.transform = '';
+      void tabbar.offsetHeight;
+      tabbar.style.transition = '';
     }, 280);
   }
   function expandHeader(){
     clearTimeout(hideSpaceTimer);
     if(!header.classList.contains('collapsed')) return;
     header.classList.remove('hidden-space');
-    void header.offsetHeight; // 강제 리플로우: display가 먼저 복원된 뒤에 transform 전환이 재생되도록 함
+    // header가 방금 레이아웃에 다시 자리를 차지해 tabbar가 실제로 아래로 밀린 만큼,
+    // tabbar를 트랜지션 없이 즉시 그 높이만큼 끌어올려서 화면상 위치를 그대로 유지한 뒤
+    // header와 동시에 0으로 애니메이션(0.28s)한다.
+    const h = header.getBoundingClientRect().height;
+    tabbar.style.transition = 'none';
+    tabbar.style.transform = `translateY(-${h}px)`;
+    void tabbar.offsetHeight;
+    tabbar.style.transition = '';
     header.classList.remove('collapsed');
+    tabbar.style.transform = '';
   }
 
   mainEl.addEventListener('scroll', ()=>{
