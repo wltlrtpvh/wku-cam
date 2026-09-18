@@ -677,8 +677,9 @@
     font-size:13.5px; color:var(--ink); line-height:1.7; text-align:center;
   }
   .directions-result:empty{ display:none; }
-  .directions-map-actions{ margin-top:14px; }
+  .directions-map-actions{ margin-top:14px; transition:opacity 0.2s ease; }
   .directions-map-actions .map-app-row{ margin-top:10px; }
+  .directions-map-actions.pending{ opacity:0; pointer-events:none; }
 
   /* ---- Meditation nap ---- */
   .med-card{
@@ -2289,12 +2290,17 @@ async function updateDirectionsResult(){
   clearRouteOnMap();
   hideDirectionsPreview();
   actionsEl.hidden = true;
+  actionsEl.classList.remove('pending');
   if(!fromId || !toId){ resultEl.textContent = ''; return; }
   if(fromId === toId){ resultEl.textContent = '서로 다른 두 건물을 선택해주세요.'; return; }
   const a = BUILDINGS.find(x=>x.id===fromId);
   const b = BUILDINGS.find(x=>x.id===toId);
   resultEl.textContent = '실제 도보 경로를 확인하고 있어요...';
   setDirectionsPreviewLoading();
+  // 버튼 영역도 로딩 중에 미리 자리를 잡아둔다(투명하게, 클릭은 막음) — 결과가 와서
+  // hidden을 늦게 풀면 그만큼 화면 높이가 갑자기 늘어나는 CLS가 생기기 때문.
+  actionsEl.hidden = false;
+  actionsEl.classList.add('pending');
   const result = await getWalkingRoute({lat:a.lat,lng:a.lng}, {lat:b.lat,lng:b.lng});
   if(document.getElementById('dir-from-select').value !== fromId || document.getElementById('dir-to-select').value !== toId) return;
   resultEl.textContent = `${a.name} → ${b.name}: ${formatRouteText(result)}`;
@@ -2306,7 +2312,7 @@ async function updateDirectionsResult(){
   document.getElementById('dir-open-google').href = links.google;
   document.getElementById('dir-open-kakao').href = links.kakao;
   document.getElementById('dir-open-naver').href = links.naver;
-  actionsEl.hidden = false;
+  actionsEl.classList.remove('pending');
 }
 document.getElementById('dir-from-select').addEventListener('change', updateDirectionsResult);
 document.getElementById('dir-to-select').addEventListener('change', updateDirectionsResult);
