@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -1374,7 +1374,7 @@ const BUILDINGS = [
   {id:"21", name:"수덕호", sub:"봉황각", info:"캠퍼스 중심에 있는 연못으로, 봉황각과 함께 산책하기 좋아요.", px:490, py:826, lat:null, lng:null, illust:"museum", rooms:null},
   {id:"22", name:"공공정책관", sub:"공공정책관", info:"공공정책 관련 강의실이 있는 건물이에요.", px:570, py:871, lat:null, lng:null, illust:"humanities", rooms:null},
   {id:"22-1", name:"공공정책관별관", sub:"공공정책관별관", info:"공공정책관의 별관 건물이에요.", px:633, py:901, lat:null, lng:null, illust:"humanities", rooms:null},
-  {id:"24", name:"학생회관", sub:"학생식당", info:"학생식당이 있어 끼니를 해결할 수 있는 건물이에요.", px:654, py:976, lat:35.9678671, lng:126.9560984, illust:"office", rooms:null},
+  {id:"24", name:"학생회관", sub:"학생식당", info:"학생식당이 있어 끼니를 해결할 수 있는 건물이에요.", px:654, py:976, lat:35.9678671, lng:126.9560984, illust:"office", alias:["학식"], rooms:null},
   {id:"25", name:"원광디지털대학교", sub:"원광디지털대학교", info:"원광디지털대학교 관련 시설이 있는 건물이에요.", px:318, py:661, lat:35.97133408850385, lng:126.95632193812229, illust:"office", rooms:null},
   {id:"26", name:"법학전문대학원", sub:"법학전문대학원", info:"법학전문대학원 강의실과 연구실이 있는 건물이에요.", px:447, py:721, lat:35.9702972, lng:126.9563561, illust:"humanities", rooms:null},
   {id:"30", name:"용화관", sub:"학생생활관(기숙사)", info:"학생들이 생활하는 기숙사 건물이에요.", px:304, py:511, lat:35.9722, lng:126.9569593, illust:"student", rooms:null},
@@ -1386,17 +1386,17 @@ const BUILDINGS = [
   {id:"36", name:"어학관", sub:"어학관", info:"외국어 강의와 어학 실습이 이뤄지는 건물이에요.", px:214, py:286, lat:35.97384354359116, lng:126.95746032792093, illust:"humanities", rooms:null},
   {id:"37", name:"청운관", sub:"청운관", info:"정확한 용도 정보는 준비 중이에요.", px:304, py:361, lat:35.973165905447814, lng:126.95772234902871, illust:"office", rooms:null},
   {id:"38", name:"익산글로벌교류센터", sub:"익산글로벌교류센터", info:"외국인 유학생 지원과 국제 교류 업무를 담당하는 곳이에요.", px:414, py:466, lat:35.97206992997699, lng:126.95752336686554, illust:"office", rooms:null},
-  {id:"51", name:"사회관", sub:"사회관", info:"강의실과 교수 연구실이 있는 건물이에요.", px:379, py:571, lat:35.9713667, lng:126.957126, illust:"humanities", dept:"사회과학대학", deptFloor:"1층", rooms:null},
+  {id:"51", name:"사회관", sub:"사회관", info:"강의실과 교수 연구실이 있는 건물이에요.", px:379, py:571, lat:35.9713667, lng:126.957126, illust:"humanities", dept:"사회과학대학", deptFloor:"1층", alias:["사회대"], rooms:null},
   {id:"51-1", name:"제2사회관", sub:"제2사회관", info:"사회관의 별관 건물이에요.", px:454, py:496, lat:35.971381448528, lng:126.9577055614054, illust:"humanities", rooms:null},
   {id:"51-2", name:"소방행정관", sub:"소방행정관", info:"소방행정학과 관련 강의실이 있는 건물이에요.", px:351, py:526, lat:35.9718606945302, lng:126.95710660771371, illust:"office", rooms:null},
   {id:"52", name:"미술관", sub:"미술관", info:"정확한 용도 정보는 준비 중이에요.", px:499, py:646, lat:null, lng:null, illust:"humanities", rooms:null},
-  {id:"53", name:"경상관", sub:"경상관", info:"강의실과 교수 연구실이 있는 건물이에요.", px:454, py:556, lat:35.9709779, lng:126.9575982, illust:"humanities", rooms:null},
+  {id:"53", name:"경상관", sub:"경상관", info:"강의실과 교수 연구실이 있는 건물이에요.", px:454, py:556, lat:35.9709779, lng:126.9575982, illust:"humanities", alias:["경영대"], rooms:null},
   {id:"53-1", name:"경상신관", sub:"경상신관", info:"경상관의 신관 건물이에요.", px:510, py:586, lat:null, lng:null, illust:"humanities", rooms:null},
   {id:"55", name:"학군단", sub:"학군단", info:"학군단(ROTC) 관련 시설이 있는 건물이에요.", px:469, py:391, lat:35.9719622039029, lng:126.95873412664837, illust:"office", rooms:null},
-  {id:"56", name:"인문관", sub:"인문관", info:"국어국문학과 등 인문 계열 강의실이 있는 건물이에요.", px:529, py:436, lat:35.9712557, lng:126.9587092, illust:"humanities", dept:"인문대학", deptFloor:"2층", rooms:null},
-  {id:"57", name:"새천년관", sub:"새천년관", info:"각종 강의와 행사가 열리는 건물이에요.", px:579, py:526, lat:35.9705959, lng:126.9586772, illust:"hall", dept:"경영대학", deptFloor:"2층", rooms:null},
+  {id:"56", name:"인문관", sub:"인문관", info:"국어국문학과 등 인문 계열 강의실이 있는 건물이에요.", px:529, py:436, lat:35.9712557, lng:126.9587092, illust:"humanities", dept:"인문대학", deptFloor:"2층", alias:["인문대"], rooms:null},
+  {id:"57", name:"새천년관", sub:"새천년관", info:"각종 강의와 행사가 열리는 건물이에요.", px:579, py:526, lat:35.9705959, lng:126.9586772, illust:"hall", dept:"경영대학", deptFloor:"2층", alias:["경영대"], rooms:null},
   {id:"58", name:"물품보관창고", sub:"물품보관창고", info:"교내 물품을 보관하는 창고예요.", px:636, py:271, lat:null, lng:null, illust:"office", rooms:null},
-  {id:"59", name:"공학관", sub:"공학관", info:"공학 계열 강의실과 실습실이 있는 건물이에요.", px:799, py:826, lat:35.9678672, lng:126.9581537, illust:"engineering", dept:"창의공과대학", deptFloor:"2층", rooms:null},
+  {id:"59", name:"공학관", sub:"공학관", info:"공학 계열 강의실과 실습실이 있는 건물이에요.", px:799, py:826, lat:35.9678672, lng:126.9581537, illust:"engineering", dept:"창의공과대학", deptFloor:"2층", alias:["공대"], rooms:null},
   {id:"59-1", name:"공학교육혁신관", sub:"공학교육혁신관", info:"정확한 용도 정보는 준비 중이에요.", px:888, py:601, lat:null, lng:null, illust:"engineering", rooms:null},
   {id:"59-2", name:"글로벌창업지원관", sub:"글로벌창업지원관", info:"정확한 용도 정보는 준비 중이에요.", px:923, py:661, lat:null, lng:null, illust:"engineering", rooms:null},
   {id:"59-3", name:"자동차공학실습관", sub:"자동차공학실습관", info:"자동차공학 관련 실습이 이뤄지는 건물이에요.", px:1013, py:631, lat:35.968245967444915, lng:126.96012408981748, illust:"engineering", rooms:null},
@@ -1410,16 +1410,16 @@ const BUILDINGS = [
   {id:"65-1", name:"문화체육관 별관", sub:"문화체육관 별관", info:"문화체육관의 별관 건물이에요.", px:980, py:1066, lat:35.96563516576366, lng:126.95774410165299, illust:"sports", rooms:null},
   {id:"66", name:"생명자원과학관", sub:"생명자원과학관", info:"생명자원과학 계열 강의실과 실습실이 있는 건물이에요.", px:912, py:511, lat:null, lng:null, illust:"engineering", rooms:null},
   {id:"67", name:"무빙테크노관", sub:"창업보육센터", info:"창업보육센터가 있어 학생 창업을 지원하는 건물이에요.", px:846, py:346, lat:35.96991185759482, lng:126.96135166165239, illust:"office", rooms:null},
-  {id:"68", name:"약학관", sub:"약학관", info:"약학 계열 강의실과 실습실이 있는 건물이에요.", px:1009, py:796, lat:35.9669229, lng:126.9595981, illust:"pharmacy", dept:"약학대학", deptFloor:"1층", rooms:null},
-  {id:"69", name:"의학관", sub:"의학관", info:"의학 계열 강의실과 실습실이 있는 건물이에요.", px:1099, py:931, lat:35.9657047, lng:126.9590814, illust:"medical", rooms:null},
+  {id:"68", name:"약학관", sub:"약학관", info:"약학 계열 강의실과 실습실이 있는 건물이에요.", px:1009, py:796, lat:35.9669229, lng:126.9595981, illust:"pharmacy", dept:"약학대학", deptFloor:"1층", alias:["약대"], rooms:null},
+  {id:"69", name:"의학관", sub:"의학관", info:"의학 계열 강의실과 실습실이 있는 건물이에요.", px:1099, py:931, lat:35.9657047, lng:126.9590814, illust:"medical", alias:["의대","의과대학"], rooms:null},
   {id:"69-1", name:"제생의세관", sub:"제생의세관", info:"정확한 용도 정보는 준비 중이에요.", px:1086, py:856, lat:35.96621622869142, lng:126.95967722743275, illust:"medical", rooms:null},
   {id:"69-2", name:"산학협력1관", sub:"산학협력1관", info:"산학협력 관련 연구와 사업이 이뤄지는 건물이에요.", px:1015, py:901, lat:35.96635671270944, lng:126.95935343804004, illust:"office", rooms:null},
-  {id:"70", name:"한의전문관", sub:"한의전문관", info:"한의학전문대학원 강의실과 연구실이 있는 건물이에요.", px:1080, py:1021, lat:35.9652841, lng:126.9586815, illust:"medical", rooms:null},
-  {id:"71", name:"한의관", sub:"한의관", info:"한의학 계열 강의실과 실습실이 있는 건물이에요.", px:1114, py:1066, lat:35.964903633685914, lng:126.95852938222514, illust:"medical", rooms:null},
-  {id:"72", name:"사범관", sub:"사범관", info:"강의실과 교수 연구실이 있는 건물이에요.", px:1069, py:661, lat:35.9673117, lng:126.9608757, illust:"humanities", dept:"사범대학", deptFloor:"1층", rooms:null},
+  {id:"70", name:"한의전문관", sub:"한의전문관", info:"한의학전문대학원 강의실과 연구실이 있는 건물이에요.", px:1080, py:1021, lat:35.9652841, lng:126.9586815, illust:"medical", alias:["한의대","한의학전문대학원"], rooms:null},
+  {id:"71", name:"한의관", sub:"한의관", info:"한의학 계열 강의실과 실습실이 있는 건물이에요.", px:1114, py:1066, lat:35.964903633685914, lng:126.95852938222514, illust:"medical", alias:["한의대","한의과대학"], rooms:null},
+  {id:"72", name:"사범관", sub:"사범관", info:"강의실과 교수 연구실이 있는 건물이에요.", px:1069, py:661, lat:35.9673117, lng:126.9608757, illust:"humanities", dept:"사범대학", deptFloor:"1층", alias:["사범대"], rooms:null},
   {id:"72-1", name:"사범대학 부속유치원", sub:"부속유치원", info:"사범대학이 운영하는 부속 유치원이에요.", px:1186, py:601, lat:35.96721916288131, lng:126.96199598239336, illust:"humanities", rooms:null},
   {id:"73", name:"간호과학관", sub:"간호과학관", info:"간호 계열 강의실과 실습실이 있는 건물이에요.", px:1155, py:691, lat:35.96675022749754, lng:126.96108713159668, illust:"medical", rooms:null},
-  {id:"74", name:"치의관", sub:"치의학과", info:"치의학 계열 강의실과 실습실이 있는 건물이에요.", px:1264, py:901, lat:35.9650573, lng:126.9606074, illust:"medical", rooms:null},
+  {id:"74", name:"치의관", sub:"치의학과", info:"치의학 계열 강의실과 실습실이 있는 건물이에요.", px:1264, py:901, lat:35.9650573, lng:126.9606074, illust:"medical", alias:["치대","치과대학"], rooms:null},
   {id:"74-1", name:"제2치학관", sub:"제2치학관", info:"치의학과의 제2 강의동이에요.", px:1384, py:856, lat:35.96482899612822, lng:126.96173993211141, illust:"medical", rooms:null},
   {id:"80", name:"원광문화복지센터", sub:"원광문화복지센터", info:"각종 문화 행사와 모임이 열리는 공간이에요.", px:1158, py:1201, lat:null, lng:null, illust:"hall", rooms:null},
   {id:"81", name:"원광대학교 한방병원", sub:"한방병원", info:"한방 진료를 받을 수 있는 원광대학교 한방병원이에요.", px:1150, py:1111, lat:35.96467654293368, lng:126.95859158254883, illust:"medical", rooms:null},
@@ -1758,17 +1758,80 @@ function looksLikeRoomQuery(q){
   return false;
 }
 
+/* ---------------- 검색 매칭: 이름·번호·부가설명·학과·별칭, 공백/하이픈 무시 ---------------- */
+function normQ(s){ return String(s).toLowerCase().replace(/[\s\-_·.]/g,''); }
+
+/* 시설 키워드는 검증된 시설 위치 데이터가 아직 없어서 안내만 한다(위치를 지어내지 않음). */
+const FACILITY_WORDS = ['화장실','편의점','카페','atm','프린터','프린트','주차장','엘리베이터','승강기'];
+function facilityWordIn(q){
+  const n = normQ(q);
+  return FACILITY_WORDS.find(w=> n.includes(w)) || null;
+}
+
+function buildingMatches(b, rawQ){
+  const q = rawQ.trim().toLowerCase();
+  const nq = normQ(q);
+  if(!nq) return true;
+  if(b.id.toLowerCase().includes(q.replace(/\s/g,''))) return true; // 건물번호는 하이픈 유지(59-1)
+  return [b.name, b.sub, b.dept || '', ...(b.alias || [])].some(t=> normQ(t).includes(nq));
+}
+
+/* "공학관 401", "59 401", "60-401", "203호 강의실" 같은 건물+강의실 조합을 (건물 부분, 호수)로 나눈다.
+   건물번호 하이픈(59-1 등)은 호수가 3~4자리일 때만 조합으로 보므로 충돌하지 않는다. */
+function parseRoomQuery(raw){
+  const t = raw.trim();
+  if(!t) return null;
+  const tail = '(\\d{3,4})\\s*호?(?:\\s*강의실)?';
+  let m;
+  if((m = t.match(/^(\d{1,3})-(\d{3,4})$/))) return {bld:m[1], room:m[2]};
+  if((m = t.match(new RegExp('^(.*\\S)\\s+' + tail + '$')))) return {bld:m[1], room:m[2]};
+  if((m = t.match(new RegExp('^([^\\d\\s][^\\d]*?)\\s*' + tail + '$')))) return {bld:m[1].trim(), room:m[2]};
+  if((m = t.match(new RegExp('^' + tail + '$')))) return {bld:'', room:m[1]};
+  return null;
+}
+
+/* 검색 결과: {list, matchText(하이라이트용 건물 부분), note(결과 아래 안내), empty(결과 없음일 때 문구)} */
+function searchBuildings(rawQ){
+  const raw = rawQ.trim();
+  let list = BUILDINGS.filter(b=> buildingMatches(b, raw));
+  let matchText = raw, note = '';
+  const room = raw ? parseRoomQuery(raw) : null;
+  if(list.length === 0 && raw){
+    if(room && room.bld){
+      let byBld = BUILDINGS.filter(b=> buildingMatches(b, room.bld));
+      // 건물 부분이 정확한 건물번호(59, 60 등)면 그 건물만 보여준다(60주년기념관 같은 부분일치 제외).
+      const exact = BUILDINGS.find(b=> b.id.toLowerCase() === room.bld.toLowerCase());
+      if(exact) byBld = [exact];
+      if(byBld.length){
+        list = byBld; matchText = room.bld;
+        // 건물에 해당 강의실이 "있다"고 단정하지 않는다.
+        note = `'${room.room}호' 강의실 정보는 준비 중이에요. 건물 상세에서 위치와 경로를 먼저 확인해보세요.`;
+      }
+    }
+  }
+  let empty = '';
+  if(list.length === 0){
+    if(facilityWordIn(raw)){
+      empty = `'${raw}'는 시설 검색이라 아직 준비 중이에요. 확인된 시설 위치 정보가 생기면 건물과 함께 찾을 수 있게 할게요. 지금은 건물명이나 건물번호로 검색해보세요.`;
+    } else if(looksLikeRoomQuery(raw) || (room && !room.bld)){
+      empty = `강의실 번호(${raw})로 검색하신 것 같아요. 강의실 상세 검색은 아직 준비 중이에요. 건물명이나 건물번호로 먼저 검색해보세요.`;
+    } else {
+      empty = `'${raw}'와 일치하는 건물이 없어요. 건물명이나 건물번호를 다시 확인해주세요.`;
+    }
+  }
+  return {list, matchText, note, empty};
+}
+
 let bldgSort = 'id'; // 'id'(번호순, 기본) | 'near'(가까운 순, 내 위치를 알 때만)
 
 function renderBuildings(){
   const list = document.getElementById('bldg-list');
   const emptyNote = document.getElementById('bldg-empty');
   const legend = document.getElementById('bldg-dist-legend');
-  const q = bldgQuery.trim().toLowerCase();
-  let filtered = BUILDINGS.filter(b => !q
-    || b.name.toLowerCase().includes(q)
-    || b.id.toLowerCase().includes(q)
-    || b.sub.toLowerCase().includes(q));
+  const result = searchBuildings(bldgQuery);
+  let filtered = result.list;
+  const q = normQ(result.matchText);                                  // 이름 하이라이트용
+  const qId = result.matchText.trim().toLowerCase().replace(/\s/g,''); // 번호 하이라이트용(하이픈 유지)
 
   document.getElementById('bldg-sort-row').hidden = !userPos;
   if(userPos && bldgSort === 'near'){
@@ -1780,13 +1843,10 @@ function renderBuildings(){
   if(filtered.length === 0){
     list.innerHTML = '';
     legend.hidden = true;
-    // 실제 건물과 매칭되는 게 없을 때만 강의실 검색 의도인지 판별해서 안내한다
-    emptyNote.textContent = looksLikeRoomQuery(bldgQuery)
-      ? `강의실 번호(${bldgQuery.trim()})로 검색하신 것 같아요. 강의실 상세 검색은 아직 준비 중이에요. 건물명이나 건물번호로 검색해보세요.`
-      : `'${bldgQuery.trim()}'와 일치하는 건물이 없어요. 건물명이나 건물번호를 다시 확인해주세요.`;
+    emptyNote.textContent = result.empty;
     return;
   }
-  emptyNote.textContent = "건물을 탭하면 사진·정보·지도를 볼 수 있어요.";
+  emptyNote.textContent = result.note || "건물을 탭하면 사진·정보·지도를 볼 수 있어요.";
   legend.hidden = !(userPos && filtered.some(b=>b.lat!=null));
 
   list.innerHTML = filtered.map(b=>{
@@ -1795,12 +1855,15 @@ function renderBuildings(){
       const d = haversine(userPos.lat,userPos.lng,b.lat,b.lng);
       distTxt = d<1000 ? `≈${Math.round(d)}m` : `≈${(d/1000).toFixed(1)}km`;
     }
+    // 이름/번호/부가설명/학과로는 안 걸리고 별칭으로만 걸린 경우, 왜 나왔는지 보이도록 별칭을 같이 보여준다.
+    const direct = [b.name, b.sub, b.dept || ''].some(t=> normQ(t).includes(q)) || b.id.toLowerCase().includes(qId);
+    const aliasHit = (!direct && q) ? (b.alias || []).find(a=> normQ(a).includes(q)) : null;
     return `
       <div class="bldg-row ${selectedBuilding===b.id?'selected':''}" data-id="${b.id}">
-        <div class="bldg-badge" style="font-size:${b.id.length>2?'10px':'12.5px'}">${highlightMatch(b.id, q)}</div>
+        <div class="bldg-badge" style="font-size:${b.id.length>2?'10px':'12.5px'}">${highlightMatch(b.id, qId)}</div>
         <div class="bldg-info">
           <div class="name">${highlightMatch(b.name, q)}</div>
-          <div class="sub">${b.sub}</div>
+          <div class="sub">${b.sub}${aliasHit ? ` · ${aliasHit}` : ''}</div>
         </div>
         <div class="bldg-dist">${distTxt}</div>
       </div>`;
@@ -2079,10 +2142,12 @@ document.getElementById('photo-remove').addEventListener('click', ()=>{
 function renderMap(){
   const pinsWrap = document.getElementById('map-pins');
   const q = bldgQuery.trim();
+  // 목록 검색과 같은 매칭 규칙(별칭·공백 무시·건물+강의실 조합)을 써서 핀 강조도 일치시킨다.
+  const matchedIds = q ? new Set(searchBuildings(q).list.map(b=>b.id)) : null;
 
   let html = BUILDINGS.filter(b=>b.px!=null && b.py!=null).map(b=>{
     const sel = b.id===selectedBuilding;
-    const matched = q && (b.name.includes(q) || b.id.includes(q) || b.sub.includes(q));
+    const matched = matchedIds && matchedIds.has(b.id);
     const leftPct = (b.px/MAP_IMG_W*100).toFixed(2);
     const topPct = (b.py/MAP_IMG_H*100).toFixed(2);
     return `<div class="map-pin ${sel?'selected':''} ${matched?'matched':''}" data-id="${b.id}" style="left:${leftPct}%; top:${topPct}%;" title="${b.id}. ${b.name}"></div>`;
