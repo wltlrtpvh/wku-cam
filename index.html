@@ -3,7 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>원광 — 공지 &amp; 길찾기</title>
+<title>원광대 캠퍼스 도우미</title>
+<meta name="description" content="원광대학교 캠퍼스 건물 검색, 지도, 길찾기와 학교 공지를 한곳에서 확인하세요.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:title" content="원광대 캠퍼스 도우미">
+<meta property="og:description" content="원광대학교 캠퍼스 건물 검색, 지도, 길찾기와 학교 공지를 한곳에서 확인하세요.">
+<meta property="og:image" content="https://wltlrtpvh.github.io/wku-cam/icon-512.png">
+<meta name="theme-color" content="#16171c">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -288,7 +298,28 @@
     overflow-x:auto;
     padding-bottom:4px;
     margin-bottom:20px;
+    scrollbar-width:none;            /* 얇은 가로 스크롤바가 글리치처럼 보이지 않게 숨긴다 */
   }
+  .chips::-webkit-scrollbar{ display:none; }
+  /* 오른쪽에 더 있다는 걸 끝 그라데이션으로 알려준다(끝까지 스크롤하면 .chips-end로 사라짐) */
+  .chips.scrollable:not(.chips-end){
+    -webkit-mask-image:linear-gradient(to right, #000 calc(100% - 36px), transparent);
+            mask-image:linear-gradient(to right, #000 calc(100% - 36px), transparent);
+  }
+
+  /* ---- 키보드 포커스 표시 (시각 디자인은 그대로, 포커스가 갈 때만 보임) ---- */
+  [role="button"]:focus-visible, .map-pin:focus-visible, button.chip:focus-visible, .notice-open:focus-visible{
+    outline:2px solid var(--gold); outline-offset:2px;
+  }
+  .notice-open:focus-visible{ outline-offset:4px; }
+
+  /* ---- 작은 닫기 버튼의 터치 영역을 44px 가깝게 (보이는 크기는 그대로) ---- */
+  .detail-close, .side-menu-close, .map-popover-close, .modal-card .close-btn{ position:relative; }
+  .detail-close{ position:absolute; }
+  .detail-close::before, .side-menu-close::before, .map-popover-close::before, .modal-card .close-btn::before{
+    content:""; position:absolute; inset:-9px;
+  }
+  .map-popover-close{ position:absolute; }
   .chip{
     flex:none;
     padding:8px 16px;
@@ -355,6 +386,9 @@
     color:var(--ink-soft);
     display:flex;
     justify-content:space-between;
+  }
+  .notice-card h3 .notice-open{
+    all:unset; display:block; width:100%; cursor:pointer; box-sizing:border-box;
   }
   .notice-card .meta .notice-origin{
     color:var(--gold-deep); font-weight:600; text-decoration:none;
@@ -970,8 +1004,8 @@
           <button type="button" class="feedback-type-btn" data-type="개선 의견">개선 의견</button>
           <button type="button" class="feedback-type-btn" data-type="기타">기타</button>
         </div>
-        <textarea class="side-menu-feedback-text" id="feedback-text" placeholder="불편한 점이나 추가했으면 하는 기능을 자유롭게 적어주세요."></textarea>
-        <input type="email" class="side-menu-feedback-email" id="feedback-email" placeholder="답장받을 이메일 (선택)">
+        <textarea class="side-menu-feedback-text" id="feedback-text" aria-label="피드백 내용" placeholder="불편한 점이나 추가했으면 하는 기능을 자유롭게 적어주세요."></textarea>
+        <input type="email" class="side-menu-feedback-email" id="feedback-email" aria-label="답장받을 이메일 (선택)" placeholder="답장받을 이메일 (선택)">
         <button class="side-menu-send-btn" id="feedback-send-btn">보내기</button>
         <p class="side-menu-hint">위치 정보 등 다른 개인정보는 포함되지 않아요.</p>
       </section>
@@ -1283,11 +1317,16 @@ function renderChips(){
   const cats = ["all", ...CAT_ORDER];
   wrap.innerHTML = cats.map(c=>{
     const label = c==="all" ? "전체" : CAT_LABEL[c];
-    return `<div class="chip ${c===activeCat?'active':''}" data-cat="${c}">${label}</div>`;
+    return `<button type="button" class="chip ${c===activeCat?'active':''}" data-cat="${c}" aria-pressed="${c===activeCat}">${label}</button>`;
   }).join('');
   wrap.querySelectorAll('.chip').forEach(el=>{
-    el.addEventListener('click', ()=>{ activeCat = el.dataset.cat; renderChips(); renderNotices(); });
+    el.addEventListener('click', ()=>{
+      activeCat = el.dataset.cat; renderChips(); renderNotices();
+      const again = document.querySelector(`#chips .chip[data-cat="${activeCat}"]`);
+      if(again) again.focus({preventScroll:true}); // 다시 그려져도 키보드 포커스 유지
+    });
   });
+  if(window.updateChipsFade) window.updateChipsFade();
 }
 
 function escHtml(s){
@@ -1302,7 +1341,7 @@ function noticeCardHtml(n){
   return `
     <div class="notice-card" data-idx="${idx}">
       <span class="tag">${CAT_LABEL[n.cat] || ''}</span>
-      <h3>${escHtml(n.title)}</h3>
+      <h3><button type="button" class="notice-open">${escHtml(n.title)}</button></h3>
       <div class="meta"><span>${escHtml(n.date)}</span>${originHtml}${ddayHtml}</div>
     </div>`;
 }
@@ -1863,7 +1902,7 @@ function renderBuildings(){
     const direct = [b.name, b.sub, b.dept || ''].some(t=> normQ(t).includes(q)) || b.id.toLowerCase().includes(qId);
     const aliasHit = (!direct && q) ? (b.alias || []).find(a=> normQ(a).includes(q)) : null;
     return `
-      <div class="bldg-row ${selectedBuilding===b.id?'selected':''}" data-id="${b.id}">
+      <div class="bldg-row ${selectedBuilding===b.id?'selected':''}" data-id="${b.id}" role="button" tabindex="0">
         <div class="bldg-badge" style="font-size:${b.id.length>2?'10px':'12.5px'}">${highlightMatch(b.id, qId)}</div>
         <div class="bldg-info">
           <div class="name">${highlightMatch(b.name, q)}</div>
@@ -1896,7 +1935,7 @@ function renderHomeNearby(){
     .map(b=>({b, d:haversine(userPos.lat,userPos.lng,b.lat,b.lng)}))
     .sort((x,y)=>x.d-y.d).slice(0,5);
   document.getElementById('home-nearby-list').innerHTML = near.map(({b,d})=>`
-    <div class="bldg-row" data-id="${b.id}">
+    <div class="bldg-row" data-id="${b.id}" role="button" tabindex="0">
       <div class="bldg-badge" style="font-size:${b.id.length>2?'10px':'12.5px'}">${b.id}</div>
       <div class="bldg-info"><div class="name">${b.name}</div><div class="sub">${b.sub}</div></div>
       <div class="bldg-dist">${formatStraightDistance(d).replace('약 ','≈')}</div>
@@ -2020,7 +2059,7 @@ function renderCompareResults(){
     return;
   }
   resultsEl.innerHTML = matches.map(b=>`
-    <div class="bldg-row compare-row" data-id="${b.id}">
+    <div class="bldg-row compare-row" data-id="${b.id}" role="button" tabindex="0">
       <div class="bldg-badge" style="font-size:${b.id.length>2?'10px':'12.5px'}">${highlightMatch(b.id, q)}</div>
       <div class="bldg-info">
         <div class="name">${highlightMatch(b.name, q)}</div>
@@ -2154,7 +2193,7 @@ function renderMap(){
     const matched = matchedIds && matchedIds.has(b.id);
     const leftPct = (b.px/MAP_IMG_W*100).toFixed(2);
     const topPct = (b.py/MAP_IMG_H*100).toFixed(2);
-    return `<div class="map-pin ${sel?'selected':''} ${matched?'matched':''}" data-id="${b.id}" style="left:${leftPct}%; top:${topPct}%;" title="${b.id}. ${b.name}"></div>`;
+    return `<div class="map-pin ${sel?'selected':''} ${matched?'matched':''}" data-id="${b.id}" style="left:${leftPct}%; top:${topPct}%;" title="${b.id}. ${b.name}" role="button" tabindex="0" aria-label="${b.id}. ${b.name}"></div>`;
   }).join('');
 
   if(userPos){
@@ -2518,6 +2557,7 @@ function switchView(v){
 
   mainEl.scrollTop = (v === 'notice') ? noticeScrollTop : 0;
   currentView = v;
+  if(v === 'notice' && window.updateChipsFade) window.updateChipsFade(); // 숨겨져 있을 땐 폭을 못 재서 보일 때 다시 계산
   navPush();
 }
 
@@ -3032,6 +3072,40 @@ loadNotices();
 renderBuildings();
 renderMap();
 renderRecentSearches();
+
+/* ---------------- 접근성: role="button"인 div(건물 행·지도 핀)를 키보드로 조작 ---------------- */
+document.addEventListener('keydown', (e)=>{
+  if(e.key !== 'Enter' && e.key !== ' ') return;
+  const el = e.target;
+  if(!el || !el.matches || !el.matches('[role="button"]')) return;
+  e.preventDefault();
+  const id = el.dataset.id;
+  if(el.classList.contains('map-pin')){
+    onPinTap(id);
+    const np = document.querySelector(`.map-pin[data-id="${id}"]`);
+    if(np) np.focus({preventScroll:true}); // 핀이 다시 그려져도 키보드 포커스를 유지
+  } else {
+    const inList = !!el.closest('#bldg-list');
+    el.click();
+    if(inList){
+      const nr = document.querySelector(`#bldg-list .bldg-row[data-id="${id}"]`);
+      if(nr) nr.focus({preventScroll:true});
+    }
+  }
+});
+
+/* ---------------- 공지 칩 줄: 스크롤 가능하면 끝 그라데이션으로 알려주기 ---------------- */
+(function chipsFade(){
+  const el = document.getElementById('chips');
+  function upd(){
+    el.classList.toggle('scrollable', el.scrollWidth > el.clientWidth + 2);
+    el.classList.toggle('chips-end', el.scrollLeft + el.clientWidth >= el.scrollWidth - 2);
+  }
+  el.addEventListener('scroll', upd, {passive:true});
+  window.addEventListener('resize', upd);
+  window.updateChipsFade = upd;
+  upd();
+})();
 
 /* ---------------- History 연결 시작 (뒤로가기·링크 진입) ---------------- */
 window.addEventListener('popstate', (e)=>{
