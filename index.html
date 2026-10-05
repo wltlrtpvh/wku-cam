@@ -355,6 +355,10 @@
     display:flex;
     justify-content:space-between;
   }
+  .notice-card .meta .notice-origin{
+    color:var(--gold-deep); font-weight:600; text-decoration:none;
+  }
+  :root[data-theme="dark"] .notice-card .meta .notice-origin, :root:not([data-theme="light"]) .notice-card .meta .notice-origin{ color:var(--gold); }
   .notice-card .meta .d-day{
     color:var(--danger);
     font-weight:700;
@@ -1248,7 +1252,7 @@ async function loadNotices(){
       title: row.title,
       date: row.posted_date || "날짜 미기재",
       ddays: null,
-      body: row.body || "상세 내용이 준비되지 않았어요.",
+      body: row.body || "",
       url: row.url || null,
     }));
   } catch(e){
@@ -1271,14 +1275,20 @@ function renderChips(){
   });
 }
 
+function escHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
 function noticeCardHtml(n){
   const idx = NOTICES.indexOf(n);
   const ddayHtml = n.ddays!=null ? `<span class="d-day">D-${n.ddays}</span>` : '';
+  // 본문이 없는 글은 모달을 열어도 볼 게 없으니, 카드에서 바로 원문으로 갈 수 있게 링크를 보여준다.
+  const originHtml = (!n.body && n.url) ? `<a class="notice-origin" href="${escHtml(n.url)}" target="_blank" rel="noopener">원문 보기 ↗</a>` : '';
   return `
     <div class="notice-card" data-idx="${idx}">
-      <span class="tag">${CAT_LABEL[n.cat]}</span>
-      <h3>${n.title}</h3>
-      <div class="meta"><span>${n.date}</span>${ddayHtml}</div>
+      <span class="tag">${CAT_LABEL[n.cat] || ''}</span>
+      <h3>${escHtml(n.title)}</h3>
+      <div class="meta"><span>${escHtml(n.date)}</span>${originHtml}${ddayHtml}</div>
     </div>`;
 }
 
@@ -1286,22 +1296,20 @@ function renderNotices(){
   const list = document.getElementById('notice-list');
 
   if(activeCat === "all"){
-    // grouped by category
-    let html = "";
-    CAT_ORDER.forEach(cat=>{
-      const items = NOTICES.filter(n=>n.cat===cat);
-      if(items.length===0) return;
-      html += `<div class="group-label">${CAT_LABEL[cat]}</div>`;
-      html += items.map(noticeCardHtml).join('');
-    });
-    list.innerHTML = html || `<div class="empty-note">등록된 공지가 없어요.</div>`;
+    // 카테고리별 묶음이 아니라 날짜 최신순 단일 목록(카드의 카테고리 태그는 유지). 날짜 없는 글은 맨 뒤.
+    const dateKey = n => /^\d/.test(n.date) ? n.date : "";
+    const items = NOTICES.slice().sort((a,b)=> dateKey(b).localeCompare(dateKey(a)));
+    list.innerHTML = items.map(noticeCardHtml).join('') || `<div class="empty-note">등록된 공지가 없어요.</div>`;
   } else {
     const items = NOTICES.filter(n => n.cat===activeCat);
     list.innerHTML = items.map(noticeCardHtml).join('') || `<div class="empty-note">해당 카테고리의 공지가 없어요.</div>`;
   }
 
   list.querySelectorAll('.notice-card').forEach(el=>{
-    el.addEventListener('click', ()=> openNoticeModal(Number(el.dataset.idx)));
+    el.addEventListener('click', (e)=>{
+      if(e.target.closest('.notice-origin')) return; // 원문 링크는 모달 없이 그대로 이동
+      openNoticeModal(Number(el.dataset.idx));
+    });
   });
 }
 
