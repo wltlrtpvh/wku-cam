@@ -1342,9 +1342,13 @@ function openNoticeModal(idx){
     linkEl.style.display = 'none';
   }
   document.getElementById('notice-modal').classList.add('show');
+  navPush('modal', idx);
+}
+function hideNoticeModal(){
+  document.getElementById('notice-modal').classList.remove('show');
 }
 function closeNoticeModal(){
-  document.getElementById('notice-modal').classList.remove('show');
+  navCloseOverlay('modal', hideNoticeModal);
 }
 
 /* ---------------- Campus buildings (공식 캠퍼스맵 이미지 기준 픽셀 좌표) ---------------- */
@@ -2178,9 +2182,14 @@ function selectBuilding(id){
     if(b) pushRecentSearch(b);
     document.getElementById('detail').scrollIntoView({behavior:'smooth', block:'nearest'});
   }
+  navPush();
 }
 
-document.getElementById('detail-close').addEventListener('click', ()=> selectBuilding(selectedBuilding));
+// 상세를 닫는 ✕는 "뒤로가기"와 같게 동작시킨다(우리가 쌓은 상세 항목일 때만).
+document.getElementById('detail-close').addEventListener('click', ()=>{
+  if(!navApplying && history.state && history.state.b && history.state.n > 0) history.back();
+  else selectBuilding(selectedBuilding);
+});
 
 document.getElementById('detail-map-btn').addEventListener('click', ()=>{
   const id = selectedBuilding;
@@ -2380,8 +2389,14 @@ function centerMapOnPixel(px, py){
   const fsBtn = document.getElementById('map-fullscreen-btn');
   const mapOuter = document.querySelector('.map-outer');
   let mapFullscreen = false;
+  // 뒤로가기(popstate)에서도 쓸 수 있게 바깥에 노출한다.
+  window.setMapFullscreen = (on)=>{ if(on !== mapFullscreen) applyMapFullscreen(on); };
   fsBtn.addEventListener('click', ()=>{
-    mapFullscreen = !mapFullscreen;
+    if(!mapFullscreen){ applyMapFullscreen(true); navPush('fs'); }
+    else navCloseOverlay('fs', ()=> applyMapFullscreen(false));
+  });
+  function applyMapFullscreen(on){
+    mapFullscreen = on;
     mapOuter.classList.toggle('fullscreen', mapFullscreen);
     fsBtn.textContent = mapFullscreen ? '✕' : '⛶';
     fsBtn.setAttribute('aria-label', mapFullscreen ? '전체화면 닫기' : '전체화면');
@@ -2389,7 +2404,7 @@ function centerMapOnPixel(px, py){
     // pan/zoom 값을 그대로 두면 지도가 화면 밖으로 밀려 보일 수 있다. 안전하게 원래대로 리셋한다.
     mapZoom = 1; mapPanX = 0; mapPanY = 0;
     requestAnimationFrame(applyMapTransform);
-  });
+  }
 })();
 
 function requestUserLocation(){
@@ -2503,6 +2518,66 @@ function switchView(v){
 
   mainEl.scrollTop = (v === 'notice') ? noticeScrollTop : 0;
   currentView = v;
+  navPush();
+}
+
+/* ---------------- 뒤로가기/링크: History API로 화면 상태를 연결 (해시: #/search, #/building/59 ...) ----------------
+   상태 = {v: 화면, b: 선택한 건물 id, o: 열린 오버레이('modal'|'menu'|'fs'), m: 공지 모달 번호, n: 우리가 쌓은 깊이}
+   n === 0 인 첫 항목에서 뒤로가기를 누르면 평소처럼 앱(사이트)을 벗어난다. */
+let navApplying = false; // popstate 복원 중에는 새 히스토리를 쌓지 않는다
+let navAfter = null;     // 오버레이를 뒤로가기로 닫은 직후 이어서 실행할 동작
+const NAV_VIEWS = ['home','map','search','notice','directions','meditation'];
+
+function navHash(s){
+  const base = s.b ? `#/building/${encodeURIComponent(s.b)}` : `#/${s.v}`;
+  return s.o ? `${base}/${s.o}` : base;
+}
+function navPush(o, m){
+  if(navApplying) return;
+  const cur = history.state || {};
+  const next = {v: currentView, b: selectedBuilding, o: o || null, m: (m == null ? null : m)};
+  if(cur.v === next.v && (cur.b || null) === (next.b || null) && (cur.o || null) === next.o) return;
+  next.n = (cur.n || 0) + 1;
+  try{ history.pushState(next, '', navHash(next)); }catch(e){}
+}
+/* 오버레이를 닫을 때: 우리가 쌓은 항목이면 뒤로가기로 닫고(popstate가 UI를 정리), 아니면 직접 닫는다. */
+function navCloseOverlay(o, fallback, after){
+  if(!navApplying && history.state && history.state.o === o){
+    navAfter = after || null;
+    history.back();
+  } else {
+    fallback();
+    if(after) after();
+  }
+}
+function navFromHash(){
+  const parts = (location.hash || '').replace(/^#\/?/, '').split('/');
+  if(parts[0] === 'building' && parts[1]){
+    const id = decodeURIComponent(parts[1]);
+    if(BUILDINGS.some(b=>b.id === id)) return {v:'search', b:id, n:0};
+  }
+  if(NAV_VIEWS.includes(parts[0])) return {v:parts[0], b:null, n:0};
+  return {v:'home', b:null, n:0};
+}
+function applyNav(st){
+  navApplying = true;
+  try{
+    const o = st.o || null;
+    if(o !== 'modal') hideNoticeModal();
+    if(o !== 'menu' && !sideMenu.hidden) hideSideMenu();
+    if(o !== 'fs' && window.setMapFullscreen) window.setMapFullscreen(false);
+    if(st.v && st.v !== currentView) switchView(st.v);
+    const wantB = st.b || null;
+    if(wantB !== selectedBuilding){
+      if(wantB){ selectedBuilding = null; selectBuilding(wantB); }
+      else if(selectedBuilding != null){ selectBuilding(selectedBuilding); }
+    }
+    if(o === 'modal' && st.m != null && NOTICES[st.m]) openNoticeModal(st.m);
+    if(o === 'menu' && sideMenu.hidden) openSideMenu();
+    if(o === 'fs' && window.setMapFullscreen) window.setMapFullscreen(true);
+  } finally {
+    navApplying = false;
+  }
 }
 
 document.querySelectorAll('.tab-btn').forEach(btn=>{
@@ -2555,8 +2630,12 @@ function openSideMenu(){
     sideMenuBackdrop.classList.add('open');
   });
   document.getElementById('side-menu-close').focus();
+  navPush('menu');
 }
 function closeSideMenu(){
+  navCloseOverlay('menu', hideSideMenu);
+}
+function hideSideMenu(){
   sideMenu.classList.remove('open');
   sideMenuBackdrop.classList.remove('open');
   document.querySelector('main').style.overflow = '';
@@ -2574,8 +2653,8 @@ document.addEventListener('keydown', (e)=>{
 });
 
 document.getElementById('menu-meditation-btn').addEventListener('click', ()=>{
-  closeSideMenu();
-  switchView('meditation');
+  // 메뉴 항목을 쌓은 히스토리를 먼저 되돌린 뒤에 화면을 이동해야 뒤로가기가 꼬이지 않는다.
+  navCloseOverlay('menu', hideSideMenu, ()=> switchView('meditation'));
 });
 
 document.getElementById('clear-recent-btn').addEventListener('click', async ()=>{
@@ -2953,6 +3032,18 @@ loadNotices();
 renderBuildings();
 renderMap();
 renderRecentSearches();
+
+/* ---------------- History 연결 시작 (뒤로가기·링크 진입) ---------------- */
+window.addEventListener('popstate', (e)=>{
+  applyNav(e.state || navFromHash());
+  if(navAfter){ const f = navAfter; navAfter = null; f(); }
+});
+(function navInit(){
+  const st = navFromHash();
+  const hasHash = !!location.hash;
+  if(st.v !== 'home' || st.b) applyNav(st); // 링크(#/building/59 등)로 바로 들어온 경우 해당 화면을 연다
+  try{ history.replaceState(st, '', hasHash ? navHash(st) : undefined); }catch(e){}
+})();
 </script>
 </body>
 </html>
