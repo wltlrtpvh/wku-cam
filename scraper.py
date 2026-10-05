@@ -38,6 +38,7 @@ HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; WKUCampusBot/1.0)"}
 
 # 게시판당 최신 몇 개까지 갱신할지. 예전엔 10개라 장학공지(14개)의 오래된 빈 본문이 안 채워졌다.
 MAX_ITEMS_PER_BOARD = 15
+MAX_RUNTIME_SEC = 480
 
 # 카테고리별 게시판 URL — 학교 홈페이지 개편 시 주소가 바뀔 수 있으니
 # 직접 접속해서 주소가 맞는지 가끔 확인해주세요.
@@ -176,7 +177,13 @@ def save_to_supabase(notice):
 
 def main():
     total = 0
+    started = time.time()
     for category, url in BOARDS.items():
+        # 일부 시간대에 실행이 15분 가까이 걸리다 취소된 이력이 있어서(응답 지연 추정),
+        # 전체 실행 시간에 상한을 두고 넘으면 남은 게시판은 다음 실행으로 넘긴다.
+        if time.time() - started > MAX_RUNTIME_SEC:
+            print(f"[{category}] 실행 시간 상한({MAX_RUNTIME_SEC}초) 초과 — 이번 실행은 여기서 종료")
+            break
         try:
             items = fetch_list(category, url)
         except Exception as e:
@@ -184,6 +191,9 @@ def main():
             continue
 
         for item in items[:MAX_ITEMS_PER_BOARD]:
+            if time.time() - started > MAX_RUNTIME_SEC:
+                print(f"[{category}] 실행 시간 상한 초과 — 남은 글은 다음 실행에서 처리")
+                break
             item["body"] = fetch_body(item["url"])
             save_to_supabase(item)
             total += 1
