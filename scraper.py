@@ -27,6 +27,7 @@ create policy "public read" on notices for select using (true);
 
 import os
 import re
+import time
 import requests
 from bs4 import BeautifulSoup
 
@@ -34,6 +35,9 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; WKUCampusBot/1.0)"}
+
+# 게시판당 최신 몇 개까지 갱신할지. 예전엔 10개라 장학공지(14개)의 오래된 빈 본문이 안 채워졌다.
+MAX_ITEMS_PER_BOARD = 15
 
 # 카테고리별 게시판 URL — 학교 홈페이지 개편 시 주소가 바뀔 수 있으니
 # 직접 접속해서 주소가 맞는지 가끔 확인해주세요.
@@ -100,6 +104,10 @@ def fetch_list(category, url):
             seen.add(it["url"])
             unique_items.append(it)
 
+    # 게시판이 상단 고정글/비정렬 목록을 줘도 "날짜 기준 최신순"으로 고른다.
+    # 날짜가 없는 항목은 맨 뒤로 보내고, 같은 날짜끼리는 원래 순서를 유지한다(sorted는 안정 정렬).
+    unique_items = sorted(unique_items, key=lambda it: it["posted_date"] or "0000.00.00", reverse=True)
+
     print(f"[{category}] 최종 추출된 글 수: {len(unique_items)}개")
     if unique_items:
         print(f"[{category}] 첫 번째 글 예시: {unique_items[0]['title']}")
@@ -120,9 +128,13 @@ def fetch_body(url):
         res = requests.get(url, headers=HEADERS, timeout=15)
         res.raise_for_status()
         soup = BeautifulSoup(res.text, "html.parser")
+        # 학사/장학/일부 채용 글은 신형(Elementor)이 아니라 구형 ComBoard 템플릿으로 내려온다.
+        # 이 경우 본문은 td.styleBoardViewContent 안(.bbs-div-kcy)에 있고 main/.entry-content는 없다.
         content = (
             soup.select_one(".elementor-widget-theme-post-content .elementor-widget-container")
             or soup.select_one('[data-widget_type^="theme-post-content"] .elementor-widget-container')
+            or soup.select_one("td.styleBoardViewContent")
+            or soup.select_one(".bbs-div-kcy")
             or soup.select_one(".entry-content")
             or soup.select_one("main")
         )
@@ -141,8 +153,13 @@ def save_to_supabase(notice):
     영영 안 고쳐지는 문제가 있었다.)
     """
     if not SUPABASE_URL or not SUPABASE_KEY:
-        print("[건너뜀 - 환경변수 없음]", notice["title"])
+        # dry-run: 파싱 결과만 확인할 수 있게 날짜/본문 길이를 같이 찍는다.
+        print(f"[dry-run] {notice['posted_date'] or '날짜없음'} | 본문 {len(notice.get('body', ''))}자 | {notice['title']}")
         return
+
+    # 본문을 못 가져온(빈) 경우엔 body 키를 빼고 보낸다. merge-duplicates는 보낸 컬럼만 갱신하므로,
+    # 일시적인 타임아웃으로 기존에 잘 저장된 본문이 빈 값으로 덮어써지는 걸 막는다.
+    notice = {k: v for k, v in notice.items() if not (k == "body" and not v)}
 
     endpoint = f"{SUPABASE_URL}/rest/v1/notices?on_conflict=url"
     headers = {
@@ -166,10 +183,11 @@ def main():
             print(f"[{category}] 목록 가져오기 실패: {e}")
             continue
 
-        for item in items[:10]:
+        for item in items[:MAX_ITEMS_PER_BOARD]:
             item["body"] = fetch_body(item["url"])
             save_to_supabase(item)
             total += 1
+            time.sleep(0.3)  # 학교 서버에 부담 주지 않게 간격을 둔다
 
     print(f"완료: 총 {total}건 확인")
 
