@@ -301,6 +301,7 @@
     cursor:pointer;
     white-space:nowrap;
   }
+  button.chip{ font-family:'Noto Sans KR', sans-serif; }
   .chip.active{
     background:var(--ink);
     border-color:var(--ink);
@@ -1010,6 +1011,12 @@
         <p class="home-locate-status" id="home-locate-status"></p>
       </div>
 
+      <div class="home-nearby" id="home-nearby" hidden>
+        <div class="section-label">가까운 건물</div>
+        <div id="home-nearby-list"></div>
+        <p class="bldg-dist-legend">≈ 표시는 직선거리 기준 추정치예요. 건물을 누르면 상세에서 실제 도보 거리를 볼 수 있어요. (위치 정보가 확인된 건물만 보여요)</p>
+      </div>
+
       <div class="home-recent" id="home-recent" hidden>
         <div class="section-label">최근 검색</div>
         <div class="home-recent-list" id="home-recent-list"></div>
@@ -1063,7 +1070,8 @@
         </div>
         <div class="map-popover-actions">
           <button class="map-popover-btn" id="map-popover-detail">상세보기</button>
-          <button class="map-popover-btn primary" id="map-popover-go">길찾기</button>
+          <button class="map-popover-btn" id="map-popover-route" hidden>건물 간 경로</button>
+          <button class="map-popover-btn primary" id="map-popover-go">거리 보기</button>
         </div>
       </div>
     </section>
@@ -1117,9 +1125,16 @@
           </div>
         </div>
 
+        <button class="detail-map-btn" id="detail-directions-btn" hidden>🚶 다른 건물까지 경로</button>
         <button class="detail-map-btn" id="detail-map-btn">🗺️ 지도에서 보기</button>
       </div>
 
+      <div id="bldg-sort-row" hidden>
+        <div class="chips" role="group" aria-label="정렬">
+          <button type="button" class="chip active" data-sort="id">번호순</button>
+          <button type="button" class="chip" data-sort="near">가까운 순</button>
+        </div>
+      </div>
       <p class="bldg-dist-legend" id="bldg-dist-legend" hidden>≈ 표시는 직선거리 기준 추정치예요. 건물을 선택하면 실제 도보 경로 거리를 볼 수 있어요.</p>
       <div id="bldg-list"></div>
       <div class="empty-note" id="bldg-empty">건물을 탭하면 사진·정보·지도를 볼 수 있어요.</div>
@@ -1743,15 +1758,24 @@ function looksLikeRoomQuery(q){
   return false;
 }
 
+let bldgSort = 'id'; // 'id'(번호순, 기본) | 'near'(가까운 순, 내 위치를 알 때만)
+
 function renderBuildings(){
   const list = document.getElementById('bldg-list');
   const emptyNote = document.getElementById('bldg-empty');
   const legend = document.getElementById('bldg-dist-legend');
   const q = bldgQuery.trim().toLowerCase();
-  const filtered = BUILDINGS.filter(b => !q
+  let filtered = BUILDINGS.filter(b => !q
     || b.name.toLowerCase().includes(q)
     || b.id.toLowerCase().includes(q)
     || b.sub.toLowerCase().includes(q));
+
+  document.getElementById('bldg-sort-row').hidden = !userPos;
+  if(userPos && bldgSort === 'near'){
+    // 위치가 확인된 건물은 가까운 순, GPS 없는 건물은 뒤에 번호순으로 둔다(없는 거리를 만들지 않음).
+    const dist = b => b.lat!=null ? haversine(userPos.lat,userPos.lng,b.lat,b.lng) : Infinity;
+    filtered = filtered.map(b=>({b,d:dist(b)})).sort((x,y)=> x.d===y.d ? 0 : (x.d<y.d ? -1 : 1)).map(x=>x.b);
+  }
 
   if(filtered.length === 0){
     list.innerHTML = '';
@@ -1784,6 +1808,40 @@ function renderBuildings(){
   list.querySelectorAll('.bldg-row').forEach(el=>{
     el.addEventListener('click', ()=> selectBuilding(el.dataset.id));
   });
+}
+
+document.querySelectorAll('#bldg-sort-row .chip').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    bldgSort = btn.dataset.sort;
+    document.querySelectorAll('#bldg-sort-row .chip').forEach(b=>b.classList.toggle('active', b===btn));
+    renderBuildings();
+  });
+});
+
+/* 내 위치를 알게 되면 홈에 가까운 건물 5개(GPS 확인된 건물만)를 바로 보여준다. */
+function formatStraightDistance(meters){
+  return `약 ${meters<1000 ? Math.round(meters)+'m' : (meters/1000).toFixed(1)+'km'}`;
+}
+function renderHomeNearby(){
+  const wrap = document.getElementById('home-nearby');
+  if(!userPos){ wrap.hidden = true; return; }
+  const near = BUILDINGS.filter(b=>b.lat!=null)
+    .map(b=>({b, d:haversine(userPos.lat,userPos.lng,b.lat,b.lng)}))
+    .sort((x,y)=>x.d-y.d).slice(0,5);
+  document.getElementById('home-nearby-list').innerHTML = near.map(({b,d})=>`
+    <div class="bldg-row" data-id="${b.id}">
+      <div class="bldg-badge" style="font-size:${b.id.length>2?'10px':'12.5px'}">${b.id}</div>
+      <div class="bldg-info"><div class="name">${b.name}</div><div class="sub">${b.sub}</div></div>
+      <div class="bldg-dist">${formatStraightDistance(d).replace('약 ','≈')}</div>
+    </div>`).join('');
+  document.querySelectorAll('#home-nearby-list .bldg-row').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      switchView('search');
+      selectedBuilding = null;
+      selectBuilding(el.dataset.id);
+    });
+  });
+  wrap.hidden = false;
 }
 
 document.getElementById('bldg-search-input').addEventListener('input', (e)=>{
@@ -1957,9 +2015,30 @@ function updateDetail(){
   setupCompare(b);
 
   const query = encodeURIComponent(`원광대학교 ${b.name}`);
-  document.getElementById('open-google').href = `https://www.google.com/maps/search/?api=1&query=${query}`;
-  document.getElementById('open-kakao').href = `https://map.kakao.com/link/search/${query}`;
+  const gEl = document.getElementById('open-google'), kEl = document.getElementById('open-kakao');
+  if(b.lat != null){
+    // GPS가 확인된 건물은 이름 검색이 아니라 "내 위치 → 이 건물 좌표" 도보 길찾기로 연결한다.
+    gEl.href = `https://www.google.com/maps/dir/?api=1&destination=${b.lat},${b.lng}&travelmode=walking`;
+    kEl.href = `https://map.kakao.com/link/to/${encodeURIComponent(b.name)},${b.lat},${b.lng}`;
+    gEl.textContent = '구글 길찾기'; kEl.textContent = '카카오 길찾기';
+  } else {
+    gEl.href = `https://www.google.com/maps/search/?api=1&query=${query}`;
+    kEl.href = `https://map.kakao.com/link/search/${query}`;
+    gEl.textContent = '구글지도'; kEl.textContent = '카카오맵';
+  }
+  // 네이버 웹 길찾기 URL 형식은 검증하지 못해서 이름 검색 링크를 그대로 둔다.
   document.getElementById('open-naver').href = `https://map.naver.com/p/search/${query}`;
+  document.getElementById('detail-directions-btn').hidden = (b.lat == null);
+}
+
+/* 이 건물을 출발지로 채운 채 "건물 간 경로" 화면으로 이동 (검색 상세·지도 팝오버 공용) */
+function openDirectionsFrom(id){
+  const b = BUILDINGS.find(x=>x.id===id);
+  if(!b || b.lat == null) return;
+  switchView('directions');
+  document.getElementById('dir-from-select').value = id;
+  document.getElementById('dir-to-select').value = '';
+  document.getElementById('dir-from-select').dispatchEvent(new Event('change'));
 }
 
 document.getElementById('photo-input').addEventListener('change', (e)=>{
@@ -2049,6 +2128,10 @@ document.getElementById('detail-map-btn').addEventListener('click', ()=>{
   if(id) showMapPopoverContent(id);
 });
 
+document.getElementById('detail-directions-btn').addEventListener('click', ()=>{
+  if(selectedBuilding != null) openDirectionsFrom(selectedBuilding);
+});
+
 /* ---------------- Map popover (marker tap info card) ---------------- */
 function onPinTap(id){
   const wasSelected = selectedBuilding === id;
@@ -2062,6 +2145,7 @@ function showMapPopoverContent(id){
   document.getElementById('map-popover-badge').textContent = b.id;
   document.getElementById('map-popover-name').textContent = b.name;
   document.getElementById('map-popover-sub').textContent = b.sub;
+  document.getElementById('map-popover-route').hidden = (b.lat == null);
   document.getElementById('map-popover').hidden = false;
   document.getElementById('map-popover').dataset.id = id;
 }
@@ -2072,6 +2156,9 @@ document.getElementById('map-popover-close').addEventListener('click', ()=>{
   hideMapPopover();
   selectedBuilding = null;
   renderMap();
+});
+document.getElementById('map-popover-route').addEventListener('click', ()=>{
+  openDirectionsFrom(document.getElementById('map-popover').dataset.id);
 });
 document.getElementById('map-popover-detail').addEventListener('click', ()=>{
   const id = document.getElementById('map-popover').dataset.id;
@@ -2261,6 +2348,7 @@ function requestUserLocation(){
       const accNote = acc > 100 ? ' (정확도가 낮을 수 있어요)' : '';
       setStatus(`현재 위치 확인 완료 (오차 약 ${acc}m)${accNote}`);
       renderBuildings();
+      renderHomeNearby();
       updateDetail();
       renderMap(); // userPos가 채워졌으니 지도 위 내 위치 마커도 다시 그려진다
       if(currentView === 'map'){
