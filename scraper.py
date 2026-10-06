@@ -175,6 +175,45 @@ def save_to_supabase(notice):
     else:
         print("저장 실패:", res.status_code, res.text[:200])
 
+def backfill_empty_bodies(started):
+    """게시판 첫 페이지에서 밀려난 오래된 글 중 본문이 비어 있는 행을 다시 시도한다.
+
+    (목록에는 더 이상 안 나오니 일반 수집으로는 영영 갱신되지 않는다.)
+    진짜로 텍스트가 없는 글(PDF/이미지뿐)은 계속 빈 값으로 남고, 매시간 재시도해도 부담이 없게 개수를 제한한다.
+    """
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return
+    try:
+        res = requests.get(
+            f"{SUPABASE_URL}/rest/v1/notices",
+            headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}"},
+            params={
+                "select": "category,title,url,posted_date",
+                "or": "(body.is.null,body.eq.)",
+                "order": "posted_date.desc",
+                "limit": "30",
+            },
+            timeout=15,
+        )
+        res.raise_for_status()
+        rows = res.json()
+    except Exception as e:
+        print(f"[백필] 빈 본문 목록 조회 실패: {e}")
+        return
+    print(f"[백필] 본문이 비어 있는 행 {len(rows)}개 재시도")
+    fixed = 0
+    for row in rows:
+        if time.time() - started > MAX_RUNTIME_SEC:
+            print("[백필] 실행 시간 상한 초과 — 남은 행은 다음 실행에서 처리")
+            break
+        body = fetch_body(row["url"])
+        if body:
+            row["body"] = body
+            save_to_supabase(row)
+            fixed += 1
+        time.sleep(0.3)
+    print(f"[백필] 본문을 채운 행: {fixed}개")
+
 def main():
     total = 0
     started = time.time()
@@ -199,6 +238,7 @@ def main():
             total += 1
             time.sleep(0.3)  # 학교 서버에 부담 주지 않게 간격을 둔다
 
+    backfill_empty_bodies(started)
     print(f"완료: 총 {total}건 확인")
 
 if __name__ == "__main__":
